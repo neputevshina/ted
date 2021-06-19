@@ -22,12 +22,12 @@ func (w WH) Val() (int, int) {
 	return w.W, w.H
 }
 
-// Wh adds W and H components to create an XYWH
+// Wh adds W and H components to the XY to yield an XYWH
 func (x XY) Wh(w int, h int) XYWH {
 	return XYWH{x.X, x.Y, w, h}
 }
 
-// WH is a point created for storing width and height
+// WH is a point intended for storing width and height
 type WH struct {
 	W, H int
 }
