@@ -36,7 +36,12 @@ func init() {
 	// 	panic(err)
 	// }
 	sdl.EnableScreenSaver()
-	ted = tedstate{focus: -1, hold: -1}
+	window.SetResizable(true)
+	ted = tedstate{
+		Winsize: Wt(800, 600),
+		focus:   -1,
+		hold:    -1,
+	}
 }
 
 func main() {
@@ -47,13 +52,23 @@ func main() {
 			window.UpdateSurface()
 		}
 	}()
-	//s := make(chan os.Signal, 0)
-	//signal.Notify(s, os.Interrupt)
+	// editor resizing, because fuck sdl
+	sdl.AddEventWatchFunc(func(ee sdl.Event, d interface{}) bool {
+		switch e := ee.(type) {
+		case *sdl.WindowEvent:
+			if e.Event == sdl.WINDOWEVENT_RESIZED {
+				w, _ := sdl.GetWindowFromID(e.WindowID)
+				if w == d.(*sdl.Window) && w == window {
+					ted.Winsize = Wt(int(e.Data1), int(e.Data2))
+				}
+			}
+		}
+		return false
+	}, window)
 	eventloop()
 	window.Destroy()
 	sdl.Quit()
 	os.Exit(0)
-	//<-s
 }
 
 func eventloop() {
@@ -75,6 +90,13 @@ func eventloop() {
 		}
 
 		switch j := e.(type) {
+		case *sdl.WindowEvent:
+			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
+				println("A")
+				ted.Winsize = Wt(int(j.Data1), int(j.Data2))
+			}
+		case *sdl.TextInputEvent:
+			// ted.TextInput(j.Text)
 		case *sdl.KeyboardEvent:
 			//keyboard(e.(*sdl.KeyboardEvent))
 		case *sdl.MouseMotionEvent:
