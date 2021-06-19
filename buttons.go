@@ -13,7 +13,7 @@ func (bt *button) Draw() {
 }
 
 func (bt *button) Mouse(at XY, buttons int) int {
-	return 0
+	return buttons
 }
 
 func (bt *button) Rect() *XYWH {

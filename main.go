@@ -41,6 +41,7 @@ func init() {
 		Winsize: Wt(800, 600),
 		focus:   -1,
 		hold:    -1,
+		NewBox:  button{},
 	}
 }
 
@@ -101,6 +102,17 @@ func eventloop() {
 			//keyboard(e.(*sdl.KeyboardEvent))
 		case *sdl.MouseMotionEvent:
 			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
+		case *sdl.MouseButtonEvent:
+			ch := 0
+			switch j.Button {
+			case sdl.BUTTON_LEFT:
+				ch = MouseLeft
+			case sdl.BUTTON_MIDDLE:
+				ch = MouseMiddle
+			case sdl.BUTTON_RIGHT:
+				ch = MouseRight
+			}
+			ted.Mouse(At(int(j.X), int(j.Y)), ch)
 		}
 
 	}
