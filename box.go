@@ -4,8 +4,46 @@ type box struct {
 	Where     XYWH
 	Inlet     inflow
 	Outlet    []outflow
-	Text      []string
+	Lines     []string
 	Scrollpos uint
+	Cursor    [2]uint
+}
+
+func (b *box) Draw() {
+	xy := b.Where
+	G.SetDrawColor(colx(BoxBorderColor))
+	G.FillRect(xy.ToSDL())
+	G.SetDrawColor(colx(BoxBgColor))
+	G.FillRect(xy.Extrude(1).ToSDL())
+	// inlet and outlet
+	G.SetDrawColor(colx(BoxBorderColor))
+	G.FillRect(inletpos(xy).ToSDL())
+	G.FillRect(outletpos(xy).ToSDL())
+	// knob
+	G.FillRect(knobpos(xy).ToSDL())
+}
+
+func (b *box) Mouse(at XY, buttons int) int {
+	if knobpos(b.Where).Inside(at) {
+		return OverKnob
+	}
+	if inletpos(b.Where).Inside(at) {
+		return OverInlet
+	}
+	if outletpos(b.Where).Inside(at) {
+		return OverOutlet
+	}
+	return 0
+}
+
+// text input in modern oses is broken: why not just use ascii BS when you
+// have to erase a symbol?
+func (b *box) TextInput(text [32]byte) {
+
+}
+
+func (b *box) Rect() *XYWH {
+	return &b.Where
 }
 
 func inletpos(xy XYWH) XYWH {

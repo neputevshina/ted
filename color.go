@@ -14,14 +14,16 @@ const (
 )
 
 const (
-	MouseHover = iota
-	MousePress
-	MouseRelease
-	MouseMove
-
 	MouseLeft   = 1 // sdl.ButtonLMask()
 	MouseMiddle = 2
 	MouseRight  = 4
+)
+
+const (
+	_ = iota
+	OverKnob
+	OverInlet
+	OverOutlet
 )
 
 func colx(i uint32) (uint8, uint8, uint8, uint8) {

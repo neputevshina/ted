@@ -1,23 +1,35 @@
 package main
 
-import "fmt"
-
 type inflow interface{}
 type outflow interface{}
 
-type node interface {
+type drawer interface {
 	Draw()
-	Mouse(at XY, buttons int)
+	Mouse(at XY, buttons int) int
 	Rect() *XYWH
 }
 
+type node interface {
+	drawer
+}
+
 type tedstate struct {
-	Winsize WH
-	Objects []node
-	Pos     XY
-	focus   int
-	hold    int
-	start   XY
+	Winsize  WH
+	Objects  []node
+	Pos      XY
+	focus    int
+	hold     int
+	holdcode int
+	start    XY
+	NewBox   button
+}
+
+func newbrect(winsize WH) XYWH {
+	m := 4
+	w := 24
+	h := 24
+	x, y := winsize.W-w-m, winsize.H-h-m
+	return Rect(x, y, w, h)
 }
 
 func (t *tedstate) Draw() {
@@ -26,11 +38,13 @@ func (t *tedstate) Draw() {
 	for i := len(t.Objects) - 1; i >= 0; i-- {
 		t.Objects[i].Draw()
 	}
+	// ugly, but will work
+	b := &t.NewBox
+	*b.Rect() = newbrect(t.Winsize)
+	b.Draw()
 }
 
-func (t *tedstate) Mouse(at XY, buttons int) {
-	fmt.Println(at, buttons)
-	//*
+func mousefield(t *tedstate, at XY, buttons int) {
 	over := false
 	for i := len(t.Objects) - 1; i >= 0; i-- {
 		e := t.Objects[i]
@@ -41,55 +55,47 @@ func (t *tedstate) Mouse(at XY, buttons int) {
 			}
 			t.focus = i
 			t.start = at
-			// switch j := e.Widget.(type) {
-			// case Toucher:
-			// 	a.tag = j.Touch(At(at.X+frame.X, at.Y+frame.Y), which, how, e.XYWH)
-			// 	if how == MousePress {
-			// 		a.Top(e.Widget)
-			// 		a.focus = len(a.store) - 1
-			// 		a.hold = a.focus
-			// 	}
-			// }
-			// break
+			t.holdcode = e.Mouse(at, buttons)
+			if t.hold <= 0 {
+				// to the top
+				t.Objects = append(append(t.Objects[:i], t.Objects[i+1:]...), e)
+				t.focus = len(t.Objects) - 1
+				t.hold = (t.focus)
+			}
+			break
 		}
 	}
 	if !over && t.hold < 0 {
 		t.focus = -1
 	}
 	if t.focus >= 0 && t.focus == t.hold {
-		//if a.tag == "move" {
-		// if how == MousePress {
-
-		// }
-		rc := t.Objects[t.hold].Rect()
-		if buttons == MouseLeft {
-			rc.X += at.X - t.start.X
-			rc.Y += at.Y - t.start.Y
-			t.start = at
+		if t.holdcode == 1 {
+			rc := t.Objects[t.hold].Rect()
+			if buttons == MouseLeft {
+				rc.X += at.X - t.start.X
+				rc.Y += at.Y - t.start.Y
+				t.start = at
+			}
+			if buttons == MouseRight {
+				e := rc
+				dw := at.X - t.start.X
+				dh := at.Y - t.start.Y
+				e.W += dw
+				e.H += dh
+				t.start = at
+			}
 		}
-		if buttons == MouseRight {
-			e := rc
-			// wh := e.Widget.Constraint()
-			dw := at.X - t.start.X
-			dh := at.Y - t.start.Y
-
-			// if e.W+dw < wh.W {
-			// 	e.W = wh.W
-			// } else {
-			e.W += dw
-			// }
-			// if e.H+dh < wh.H {
-			// 	e.H = wh.H
-			// } else {
-			e.H += dh
-			// }
-			t.start = at
-			//}
-		}
-		//}
 	}
 	if buttons == 0 {
 		t.hold = -1
 	}
-	//*/
+}
+
+func (t *tedstate) Mouse(at XY, buttons int) {
+	//fmt.Println(at, buttons)
+	if t.NewBox.Rect().Inside(at) {
+		t.NewBox.Mouse(at, buttons)
+	} else {
+		mousefield(t, at, buttons)
+	}
 }
