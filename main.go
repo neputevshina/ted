@@ -8,8 +8,12 @@ import (
 )
 
 var window *sdl.Window
-var g *sdl.Renderer
-var font *ttf.Font
+
+// G is a global window rendeder for an application
+var G *sdl.Renderer
+var ted tedstate
+
+// var font *ttf.Font
 
 func init() {
 	var err error
@@ -24,22 +28,22 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	g, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED|sdl.RENDERER_PRESENTVSYNC)
+	G, err = sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED|sdl.RENDERER_PRESENTVSYNC)
 	if err != nil {
 		panic(err)
 	}
-	if font, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
-		panic(err)
-	}
+	// if font, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
+	// 	panic(err)
+	// }
 	sdl.EnableScreenSaver()
+	ted = tedstate{focus: -1, hold: -1}
 }
 
 func main() {
 	go func() {
-		//predraw()
 		for {
-			draw()
-			g.Present()
+			ted.Draw()
+			G.Present()
 			window.UpdateSurface()
 		}
 	}()
@@ -70,18 +74,12 @@ func eventloop() {
 			return
 		}
 
-		switch e.(type) {
+		switch j := e.(type) {
 		case *sdl.KeyboardEvent:
 			//keyboard(e.(*sdl.KeyboardEvent))
-		case *sdl.MouseButtonEvent:
-			//mouse(e.(*sdl.MouseButtonEvent))
 		case *sdl.MouseMotionEvent:
-			//mousemove(e.(*sdl.MouseMotionEvent))
+			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
 		}
 
 	}
-}
-
-func draw() {
-
 }

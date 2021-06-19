@@ -1,4 +1,4 @@
-module githib.com/neputevshina/ted/cmd
+module githib.com/neputevshina/ted
 
 go 1.16
 
