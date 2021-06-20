@@ -2,11 +2,19 @@ package main
 
 type box struct {
 	Where     XYWH
-	Inlet     inflow
-	Outlet    []outflow
+	inlet     node
+	outlets   map[node]struct{}
 	Lines     []string
 	Scrollpos uint
 	Cursor    [2]uint
+}
+
+func (b *box) Inlet() *node {
+	return &b.inlet
+}
+
+func (b *box) Outlets() *map[node]struct{} {
+	return &b.outlets
 }
 
 func (b *box) Draw() {
@@ -46,12 +54,17 @@ func (b *box) Rect() *XYWH {
 	return &b.Where
 }
 
+const winout = 8
+const hinout = 4
+
 func inletpos(xy XYWH) XYWH {
-	return Rect(xy.X+4, xy.Y, 8, 3)
+	//return Rect(xy.X+4, xy.Y, 8, 3)
+	return Rect(xy.X, xy.Y, winout, hinout)
 }
 
 func outletpos(xy XYWH) XYWH {
-	return Rect(xy.X+4, xy.Y+xy.H-3, 8, 3)
+	//return Rect(xy.X+4, xy.Y+xy.H-3, 8, 3)
+	return Rect(xy.X, xy.Y+xy.H-hinout, winout, hinout)
 }
 
 func knobpos(xy XYWH) XYWH {
@@ -65,8 +78,8 @@ func knobpos(xy XYWH) XYWH {
 
 type cmd struct {
 	Where  XYWH
-	Inlet  inflow
-	Outlet []outflow
-	Errlet []outflow
+	Inlet  node
+	Outlet map[node]struct{}
+	Errlet map[node]struct{}
 	Cmd    string
 }

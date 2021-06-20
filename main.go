@@ -15,6 +15,9 @@ var ted tedstate
 
 // var font *ttf.Font
 
+// Debug mode on
+const Debug = true
+
 func init() {
 	var err error
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
