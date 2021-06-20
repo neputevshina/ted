@@ -42,8 +42,8 @@ func (x XYWH) Extrude(length int) XYWH {
 	return Rect(x.X+length, x.Y+length, x.W-length*2, x.H-length*2)
 }
 
-func (xy XYWH) Center() XY {
-	return At((2*xy.X+xy.W)/2, (2*xy.Y+xy.H)/2)
+func (x XYWH) Center() XY {
+	return At((2*x.X+x.W)/2, (2*x.Y+x.H)/2)
 }
 
 // Inside checks if point and rect intersects
