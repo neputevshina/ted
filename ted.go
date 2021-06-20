@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type tedstate struct {
 	Winsize  WH
 	Objects  []node
@@ -28,26 +30,29 @@ func (t *tedstate) Draw() {
 	G.SetDrawColor(colx(FieldColor))
 	G.Clear()
 	for i := range t.Objects {
+		// connections
+		G.SetDrawColor(colx(BoxBorderColor))
+		if o := (*t.Objects[i].Inlet()); o != nil {
+			ou := outletpos(*o.Rect()).Center()
+			in := inletpos(*t.Objects[i].Rect()).Center()
+			G.DrawLine(int32(ou.X), int32(ou.Y), int32(in.X), int32(in.Y))
+		}
+	}
+	for i := range t.Objects {
 		// super-ugly, but i don't know how to implement it other way
-		// also todo: pretty patchcord rendering a-la max
+		// also maybe todo: pretty patchcord rendering a la max
 		if i == t.focus {
 			G.SetDrawColor(colx(0x0000ffff))
 			G.FillRect(t.Objects[t.focus].Rect().Extrude(-2).ToSDL())
 		}
-		G.SetDrawColor(colx(BoxBorderColor))
-		if o := (*t.Objects[i].Inlet()); o != nil {
-			ou := outletpos(*o.Rect()).Xy()
-			in := inletpos(*t.Objects[i].Rect()).Xy()
-			G.DrawLine(int32(ou.X), int32(ou.Y), int32(in.X), int32(in.Y))
-		}
-		if Debug {
-			G.SetDrawColor(colx(0xff0000ff))
-			for l := range *t.Objects[i].Outlets() {
-				in := inletpos(*l.Rect()).Xy().Move(At(2, 2))
-				out := outletpos(*t.Objects[i].Rect()).Xy().Move(At(2, 2))
-				G.DrawLine(int32(in.X), int32(in.Y), int32(out.X), int32(out.Y))
-			}
-		}
+		// debug
+		// G.SetDrawColor(colx(0xff0000ff))
+		// for l := range *t.Objects[i].Outlets() {
+		// 	in := inletpos(*l.Rect()).Xy().Move(At(2, 2))
+		// 	out := outletpos(*t.Objects[i].Rect()).Xy().Move(At(2, 2))
+		// 	G.DrawLine(int32(in.X), int32(in.Y), int32(out.X), int32(out.Y))
+		// }
+		//
 		t.Objects[i].Draw()
 	}
 	// ugly, but will work
@@ -70,7 +75,7 @@ func mousefield(t *tedstate, at XY, buttons int) {
 			if t.hold >= 0 {
 				break
 			}
-			t.holdcode = e.Mouse(at, buttons)
+			t.holdcode = e.Mouse(at, buttons, t.delta)
 			t.focus = i
 			t.start = at
 			if t.hold < 0 && buttons != 0 {
@@ -107,7 +112,7 @@ func mousefield(t *tedstate, at XY, buttons int) {
 		}
 
 		o := t.Objects[t.over]
-		hc2 := o.Mouse(at, buttons)
+		hc2 := o.Mouse(at, buttons, t.delta)
 
 		if hc2 == OverInlet {
 			if t.doesconn {
@@ -143,6 +148,7 @@ func delinlet(o node) {
 }
 
 func (t *tedstate) Mouse(at XY, buttons int) {
+	fmt.Println(at, buttons, t.prev, t.delta)
 	t.current = at
 	t.delta = t.prev ^ buttons
 	if t.NewBox.Rect().Inside(at) && t.hold < 0 {
@@ -154,7 +160,7 @@ func (t *tedstate) Mouse(at XY, buttons int) {
 			t.start = at
 			t.hold = len(t.Objects) - 1
 			t.focus = t.hold
-			t.holdcode = t.Objects[t.focus].Mouse(at, buttons)
+			t.holdcode = t.Objects[t.focus].Mouse(at, buttons, t.delta)
 		}
 	} else {
 		mousefield(t, at, buttons)

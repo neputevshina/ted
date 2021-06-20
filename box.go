@@ -1,8 +1,17 @@
 package main
 
+const (
+	inappend = iota
+	inupdate
+
+	inmodes
+)
+
 type box struct {
 	Where     XYWH
+	hold      bool
 	inlet     node
+	inletmode int
 	outlets   map[node]struct{}
 	Lines     []string
 	Scrollpos uint
@@ -11,6 +20,10 @@ type box struct {
 
 func (b *box) Inlet() *node {
 	return &b.inlet
+}
+
+func (b *box) Limits() (WH, WH) {
+	return Wt(32, 32), Wt(-1, -1)
 }
 
 func (b *box) Outlets() *map[node]struct{} {
@@ -23,24 +36,38 @@ func (b *box) Draw() {
 	G.FillRect(xy.ToSDL())
 	G.SetDrawColor(colx(BoxBgColor))
 	G.FillRect(xy.Extrude(1).ToSDL())
-	// inlet and outlet
-	G.SetDrawColor(colx(BoxBorderColor))
+	// inlet
+	switch b.inletmode {
+	case inappend:
+		G.SetDrawColor(colx(InletAppendColor))
+	case inupdate:
+		G.SetDrawColor(colx(InletUpdateColor))
+	}
 	G.FillRect(inletpos(xy).ToSDL())
+	G.SetDrawColor(colx(BoxBorderColor))
+	// outlet
 	G.FillRect(outletpos(xy).ToSDL())
 	// knob
 	G.FillRect(knobpos(xy).ToSDL())
 }
 
-func (b *box) Mouse(at XY, buttons int) int {
+func (b *box) Mouse(at XY, buttons int, delta int) int {
 	if knobpos(b.Where).Inside(at) {
 		return OverKnob
 	}
 	if inletpos(b.Where).Inside(at) {
+		if buttons == MouseLeft && delta != 0 {
+			println("yes")
+			b.inletmode = (b.inletmode + 1) % inmodes
+			b.hold = true
+			return 0
+		}
 		return OverInlet
 	}
 	if outletpos(b.Where).Inside(at) {
 		return OverOutlet
 	}
+	b.hold = false
 	return 0
 }
 
@@ -52,24 +79,6 @@ func (b *box) TextInput(text [32]byte) {
 
 func (b *box) Rect() *XYWH {
 	return &b.Where
-}
-
-const winout = 8
-const hinout = 4
-
-func inletpos(xy XYWH) XYWH {
-	//return Rect(xy.X+4, xy.Y, 8, 3)
-	return Rect(xy.X, xy.Y, winout, hinout)
-}
-
-func outletpos(xy XYWH) XYWH {
-	//return Rect(xy.X+4, xy.Y+xy.H-3, 8, 3)
-	return Rect(xy.X, xy.Y+xy.H-hinout, winout, hinout)
-}
-
-func knobpos(xy XYWH) XYWH {
-	bx := BoxKnobsSize
-	return Rect(xy.X+xy.W-bx, xy.Y+xy.H-bx, bx, bx)
 }
 
 // func errletpos(xy XYWH) XYWH {

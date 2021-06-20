@@ -11,10 +11,10 @@ var window *sdl.Window
 
 // G is a global window rendeder for an application
 var G *sdl.Renderer
-var ted tedstate
+var et ElasticText
 
-// Gfont is a global application font
-var Gfont *ttf.Font
+// Gfoint is a global application font
+var Gfoint *ttf.Font
 
 func init() {
 	var err error
@@ -33,23 +33,24 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	if Gfont, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
+	if Gfoint, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
 		panic(err)
 	}
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
-	ted = tedstate{
-		Winsize: Wt(800, 600),
-		focus:   -1,
-		hold:    -1,
-		NewBox:  button{},
+	et = ElasticText{
+		Where: Rect(0, 0, 800, 600),
+		R:     G,
+		Font:  Gfoint,
 	}
 }
 
 func main() {
 	go func() {
 		for {
-			ted.Draw()
+			G.SetDrawColor(colx(0x000000ff))
+			G.Clear()
+			et.Draw()
 			G.Present()
 			window.UpdateSurface()
 		}
@@ -61,7 +62,7 @@ func main() {
 			if e.Event == sdl.WINDOWEVENT_RESIZED {
 				w, _ := sdl.GetWindowFromID(e.WindowID)
 				if w == d.(*sdl.Window) && w == window {
-					ted.Winsize = Wt(int(e.Data1), int(e.Data2))
+					et.Where = At(0, 0).Wh(int(e.Data1), int(e.Data2))
 				}
 			}
 		}
@@ -95,14 +96,14 @@ func eventloop() {
 		case *sdl.WindowEvent:
 			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
 				println("A")
-				ted.Winsize = Wt(int(j.Data1), int(j.Data2))
+				et.Where = At(0, 0).Wh(int(j.Data1), int(j.Data2))
 			}
 		case *sdl.TextInputEvent:
 			// ted.TextInput(j.Text)
 		case *sdl.KeyboardEvent:
 			//keyboard(e.(*sdl.KeyboardEvent))
 		case *sdl.MouseMotionEvent:
-			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
+			et.Mouse(At(int(j.X), int(j.Y)), int(j.State), 0)
 		case *sdl.MouseButtonEvent:
 			ch := 0
 			switch j.Button {
@@ -116,7 +117,7 @@ func eventloop() {
 			if j.State == sdl.RELEASED {
 				ch = 0
 			}
-			ted.Mouse(At(int(j.X), int(j.Y)), ch)
+			et.Mouse(At(int(j.X), int(j.Y)), ch, 0)
 		}
 
 	}
