@@ -24,6 +24,8 @@ const (
 	OverKnob
 	OverInlet
 	OverOutlet
+	OverTextA
+	OverTextB
 )
 
 func colx(i uint32) (uint8, uint8, uint8, uint8) {

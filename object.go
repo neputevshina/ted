@@ -1,7 +1,7 @@
 package main
 
-type inflow interface{}
-type outflow interface{}
+// type inflow interface{}
+// type outflow interface{}
 
 type drawer interface {
 	Draw()
@@ -11,4 +11,6 @@ type drawer interface {
 
 type node interface {
 	drawer
+	Inlet() *node
+	Outlets() *map[node]struct{}
 }
