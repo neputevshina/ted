@@ -39,10 +39,10 @@ func init() {
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
 	ted = tedstate{
-		Winsize: Wt(800, 600),
-		focus:   -1,
-		hold:    -1,
-		NewBox:  button{},
+		Where:  Wt(800, 600),
+		focus:  -1,
+		hold:   -1,
+		NewBox: button{},
 	}
 }
 
@@ -61,7 +61,7 @@ func main() {
 			if e.Event == sdl.WINDOWEVENT_RESIZED {
 				w, _ := sdl.GetWindowFromID(e.WindowID)
 				if w == d.(*sdl.Window) && w == window {
-					ted.Winsize = Wt(int(e.Data1), int(e.Data2))
+					ted.Where = Wt(int(e.Data1), int(e.Data2))
 				}
 			}
 		}
@@ -73,39 +73,92 @@ func main() {
 	os.Exit(0)
 }
 
+// func eventloop() {
+// 	wait := func() sdl.Event {
+// 		return sdl.WaitEventTimeout(1000)
+// 		//return sdl.PollEvent()
+// 	}
+// 	var e sdl.Event
+// 	for {
+// 	wt:
+// 		e = wait()
+// 		if e == nil {
+// 			goto wt
+// 		}
+
+// 		switch e.(type) {
+// 		case *sdl.QuitEvent:
+// 			return
+// 		}
+
+// 		switch j := e.(type) {
+// 		case *sdl.WindowEvent:
+// 			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
+// 				println("A")
+// 				ted.Winsize = Wt(int(j.Data1), int(j.Data2))
+// 			}
+// 		case *sdl.TextInputEvent:
+// 			// ted.TextInput(j.Text)
+// 		case *sdl.KeyboardEvent:
+// 			//keyboard(e.(*sdl.KeyboardEvent))
+// 		case *sdl.MouseMotionEvent:
+// 			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
+// 		case *sdl.MouseButtonEvent:
+// 			ch := 0
+// 			switch j.Button {
+// 			case sdl.BUTTON_LEFT:
+// 				ch = MouseLeft
+// 			case sdl.BUTTON_MIDDLE:
+// 				ch = MouseMiddle
+// 			case sdl.BUTTON_RIGHT:
+// 				ch = MouseRight
+// 			}
+// 			if j.State == sdl.RELEASED {
+// 				ch = 0
+// 			}
+// 			ted.Mouse(At(int(j.X), int(j.Y)), ch)
+// 		}
+
+// 	}
+// }
+
+var mouseprev int
+var moused int
+
 func eventloop() {
 	wait := func() sdl.Event {
 		return sdl.WaitEventTimeout(1000)
 		//return sdl.PollEvent()
 	}
-	var e sdl.Event
+	var event sdl.Event
 	for {
 	wt:
-		e = wait()
-		if e == nil {
+		event = wait()
+		if event == nil {
 			goto wt
 		}
 
-		switch e.(type) {
+		switch event.(type) {
 		case *sdl.QuitEvent:
 			return
 		}
 
-		switch j := e.(type) {
+		switch e := event.(type) {
 		case *sdl.WindowEvent:
-			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
+			if e.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
 				println("A")
-				ted.Winsize = Wt(int(j.Data1), int(j.Data2))
+				ted.Where = Wt(int(e.Data1), int(e.Data2))
 			}
 		case *sdl.TextInputEvent:
-			// ted.TextInput(j.Text)
-		case *sdl.KeyboardEvent:
-			//keyboard(e.(*sdl.KeyboardEvent))
+			ted.TextInput(e.Text)
 		case *sdl.MouseMotionEvent:
-			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
+			s := int(e.State)
+			moused = mouseprev ^ s
+			ted.Mouse(At(int(e.X), int(e.Y)), s, moused)
+			mouseprev = int(e.State)
 		case *sdl.MouseButtonEvent:
 			ch := 0
-			switch j.Button {
+			switch e.Button {
 			case sdl.BUTTON_LEFT:
 				ch = MouseLeft
 			case sdl.BUTTON_MIDDLE:
@@ -113,10 +166,20 @@ func eventloop() {
 			case sdl.BUTTON_RIGHT:
 				ch = MouseRight
 			}
-			if j.State == sdl.RELEASED {
-				ch = 0
+			if e.State == sdl.RELEASED {
+				ted.Mouse(At(int(e.X), int(e.Y)), 0, ch)
+			} else {
+				ted.Mouse(At(int(e.X), int(e.Y)), ch, ch)
 			}
-			ted.Mouse(At(int(j.X), int(j.Y)), ch)
+		case *sdl.KeyboardEvent:
+			if e.State == sdl.PRESSED {
+				switch e.Keysym.Sym {
+				case sdl.K_RETURN:
+					ted.TextInput([32]byte{'\n'})
+				case sdl.K_BACKSPACE:
+					ted.TextInput([32]byte{'\b'})
+				}
+			}
 		}
 
 	}

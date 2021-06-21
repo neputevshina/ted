@@ -65,6 +65,7 @@ type TedText struct {
 	Text        []rune
 	Color       uint32
 	Selection   [2]int
+	dirty       bool
 	//colors [][]uint
 	//tabs [][]uint
 }
@@ -196,7 +197,10 @@ func (e *TedText) paintsel() {
 
 // Draw paints object to the screen
 func (e *TedText) Draw() {
+	//if e.dirty { // TODO
 	e.mylittletypesetter()
+	e.dirty = false
+	//}
 	e.paintsel()
 }
 
@@ -270,9 +274,19 @@ func (e *TedText) Mouse(at XY, buttons int, delta int) int {
 }
 
 func (e *TedText) TextInput(b [32]byte) {
+	e.dirty = true
 	r, _ := utf8.DecodeRune(b[:])
 	x0, x1 := e.Selection[0], e.Selection[1]
-	e.Text = append(e.Text[:x0], append([]rune{r}, e.Text[x1:]...)...)
-	e.Selection[0]++
+	if r == '\b' {
+		if x0 == x1 {
+			e.Text = append(e.Text[:x0-1], e.Text[x0:]...)
+			e.Selection[0]--
+		} else {
+			e.Text = append(e.Text[:x0], e.Text[x1:]...)
+		}
+	} else {
+		e.Text = append(e.Text[:x0], append([]rune{r}, e.Text[x1:]...)...)
+		e.Selection[0]++
+	}
 	e.Selection[1] = e.Selection[0]
 }
