@@ -2,6 +2,9 @@ package main
 
 import (
 	"os"
+	"unicode/utf8"
+
+	_ "embed"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -13,10 +16,23 @@ var window *sdl.Window
 var G *sdl.Renderer
 var et TedText
 
+//go:embed field.go
+var fieldgo []byte
+
 // Gfont is a global application font
 var Gfont *ttf.Font
 
 var gcache *SpriteCache
+
+func conv(a []byte) (u []rune) {
+	u = make([]rune, 0, len(a)/2)
+	for len(a) > 0 {
+		r, s := utf8.DecodeRune(a)
+		u = append(u, r)
+		a = a[s:]
+	}
+	return
+}
 
 func init() {
 	var err error
@@ -42,54 +58,14 @@ func init() {
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
 	et = TedText{
-		Text: []rune(`12345678d0
-хахахаха я наебал тебя
-amogus
-asdasdasdadad sad asd asd asd asdhjdsja hjdsa hjsad jads dsa jhsad jhajsd hajsd hajsd h
-asdhjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jhad jhsa djhasd jhasjdhasjdhajdhsadjsahdsajdhfgaifd
-
-nigger
-
-
-
-ad 
-
-
-
-
-
-asd
-asd
-as
-d
-
-
-
-
-
-asd
-asd
-hjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
-hjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
-hjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
-hjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
-hjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jhahjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jhahjsa dhsa dhjsad jhsad hsad jhajsd hjdsaajshd jahd asjdh jsahdjsahdjashdjsahdjsahdsad
-ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
-
-`),
-		Selection:   [2]int{9, 12},
+		Text:        conv(fieldgo),
+		Sel:         [2]int{9, 12},
 		SpriteCache: gcache,
 		Where:       Rect(0, 0, 800-20, 600-20),
 		R:           G,
 		Font:        Gfont,
-		dirty:       true,
+		addlater:    'a',
+		//dirty:       true,
 	}
 	gcache.Generate(et.Text)
 }
