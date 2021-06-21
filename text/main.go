@@ -13,8 +13,8 @@ var window *sdl.Window
 var G *sdl.Renderer
 var et TedText
 
-// Gfoint is a global application font
-var Gfoint *ttf.Font
+// Gfont is a global application font
+var Gfont *ttf.Font
 
 var gcache *SpriteCache
 
@@ -35,10 +35,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	if Gfoint, err = ttf.OpenFont(`./Go-Regular.ttf`, 12); err != nil {
+	if Gfont, err = ttf.OpenFont(`./Go-Regular.ttf`, 12); err != nil {
 		panic(err)
 	}
-	gcache = NewSpriteCache(G, Gfoint, rgba(0x000000ff))
+	gcache = NewSpriteCache(G, Gfont, rgba(0x000000ff))
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
 	et = TedText{
@@ -88,7 +88,8 @@ ashsjhdsajdhsa as hdjad hjashdjsahd jashd had jhad jha
 		SpriteCache: gcache,
 		Where:       Rect(0, 0, 800-20, 600-20),
 		R:           G,
-		Font:        Gfoint,
+		Font:        Gfont,
+		dirty:       true,
 	}
 	gcache.Generate(et.Text)
 }
@@ -134,37 +135,35 @@ func eventloop() {
 		return sdl.WaitEventTimeout(1000)
 		//return sdl.PollEvent()
 	}
-	var e sdl.Event
+	var event sdl.Event
 	for {
 	wt:
-		e = wait()
-		if e == nil {
+		event = wait()
+		if event == nil {
 			goto wt
 		}
 
-		switch e.(type) {
+		switch event.(type) {
 		case *sdl.QuitEvent:
 			return
 		}
 
-		switch j := e.(type) {
+		switch e := event.(type) {
 		case *sdl.WindowEvent:
-			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
+			if e.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
 				println("A")
-				et.Where = At(0, 0).Wh(int(j.Data1), int(j.Data2))
+				et.Where = At(0, 0).Wh(int(e.Data1), int(e.Data2))
 			}
 		case *sdl.TextInputEvent:
-			et.TextInput(j.Text)
-		case *sdl.KeyboardEvent:
-			//keyboard(e.(*sdl.KeyboardEvent))
+			et.TextInput(e.Text)
 		case *sdl.MouseMotionEvent:
-			s := int(j.State)
+			s := int(e.State)
 			moused = mouseprev ^ s
-			et.Mouse(At(int(j.X), int(j.Y)), s, moused)
-			mouseprev = int(j.State)
+			et.Mouse(At(int(e.X), int(e.Y)), s, moused)
+			mouseprev = int(e.State)
 		case *sdl.MouseButtonEvent:
 			ch := 0
-			switch j.Button {
+			switch e.Button {
 			case sdl.BUTTON_LEFT:
 				ch = MouseLeft
 			case sdl.BUTTON_MIDDLE:
@@ -172,12 +171,20 @@ func eventloop() {
 			case sdl.BUTTON_RIGHT:
 				ch = MouseRight
 			}
-			if j.State == sdl.RELEASED {
-				et.Mouse(At(int(j.X), int(j.Y)), 0, ch)
+			if e.State == sdl.RELEASED {
+				et.Mouse(At(int(e.X), int(e.Y)), 0, ch)
 			} else {
-				et.Mouse(At(int(j.X), int(j.Y)), ch, ch)
+				et.Mouse(At(int(e.X), int(e.Y)), ch, ch)
 			}
-
+		case *sdl.KeyboardEvent:
+			if e.State == sdl.PRESSED {
+				switch e.Keysym.Sym {
+				case sdl.K_RETURN:
+					et.TextInput([32]byte{'\n'})
+				case sdl.K_BACKSPACE:
+					et.TextInput([32]byte{'\b'})
+				}
+			}
 		}
 
 	}
