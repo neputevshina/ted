@@ -64,8 +64,8 @@ type TedText struct {
 	Limit       bool
 	Text        []rune
 	Color       uint32
-	Selection   [2]int
-	dirty       bool
+	Sel         [2]int
+	addlater    rune
 	//colors [][]uint
 	//tabs [][]uint
 }
@@ -110,7 +110,7 @@ func (e *TedText) mylittletypesetter() {
 
 	rcache := e.SpriteCache.Cache
 	for _, r := range e.Text {
-		e.SpriteCache.Update(r)
+		//e.SpriteCache.Update(r)
 		if r == '\n' {
 			lineacc += f.LineSkip()
 			characc = 0
@@ -128,8 +128,9 @@ func (e *TedText) mylittletypesetter() {
 }
 
 func (e *TedText) paintsel() {
-	if e.Selection[1] < e.Selection[0] {
-		e.Selection[0], e.Selection[1] = e.Selection[1], e.Selection[0]
+	esel := e.Sel
+	if esel[1] < esel[0] {
+		esel[0], esel[1] = esel[1], esel[0]
 	}
 
 	fh := e.Font.Height()
@@ -144,14 +145,14 @@ func (e *TedText) paintsel() {
 
 	var line XYWH
 
-	if e.Selection[1] >= len(e.Text) {
-		e.Selection[1] = len(e.Text)
+	if esel[1] >= len(e.Text) {
+		esel[1] = len(e.Text)
 	}
 
 	inside := false
 	for i, r := range e.Text {
 		// cache is already there, skip
-		if i == e.Selection[0] {
+		if i == esel[0] {
 			inside = true
 			line = Rect(characc, lineacc, 0, fh).Move(e.Where)
 
@@ -172,7 +173,7 @@ func (e *TedText) paintsel() {
 			line = Rect(characc, lineacc, 0, fh).Move(e.Where)
 			continue
 		}
-		if i == e.Selection[1] {
+		if i == esel[1] {
 			inside = false
 			line.W = characc
 			e.R.SetDrawColor(colx(0xffff00ff))
@@ -188,7 +189,7 @@ func (e *TedText) paintsel() {
 		characc += e.SpriteCache.Cache[r].m.Advance
 	}
 
-	if e.Selection[1] == len(e.Text) {
+	if esel[1] == len(e.Text) {
 		e.R.SetDrawColor(colx(0x000000ff))
 		e.R.FillRect(Rect(line.X+line.W-1, line.Y, 1, line.H).ToSDL())
 	}
@@ -198,8 +199,12 @@ func (e *TedText) paintsel() {
 // Draw paints object to the screen
 func (e *TedText) Draw() {
 	//if e.dirty { // TODO
+	// sooooo, with this shitty »hack« we will update only incoming runes! yay!!
+	// and this speeds up almost nothing.
+	// fucking add blitting cache, for god's sake
+	e.SpriteCache.Update(e.addlater)
 	e.mylittletypesetter()
-	e.dirty = false
+	//e.dirty = false
 	//}
 	e.paintsel()
 }
@@ -259,34 +264,37 @@ func (e *TedText) Mouse(at XY, buttons int, delta int) int {
 	//at = at.Move(At(-e.Where.X, -e.Where.Y))
 	measure := measchar(e.Text, e.SpriteCache.Cache, e.Font, e.Where, at)
 	if buttons == MouseLeft && delta == MouseLeft {
-		e.Selection[0] = measure
+		e.Sel[0] = measure
 	}
 	if buttons == MouseLeft && delta == 0 &&
-		(measure >= e.Selection[0] || measure <= e.Selection[1]) {
-		e.Selection[1] = measure
+		(measure >= e.Sel[0] || measure <= e.Sel[1]) {
+		e.Sel[1] = measure
 	}
 	if buttons == 0 && delta == MouseLeft {
-		if measure == e.Selection[0] {
-			e.Selection[1] = e.Selection[0]
+		if measure == e.Sel[0] {
+			e.Sel[1] = e.Sel[0]
 		}
 	}
 	return 0
 }
 
 func (e *TedText) TextInput(b [32]byte) {
-	e.dirty = true
 	r, _ := utf8.DecodeRune(b[:])
-	x0, x1 := e.Selection[0], e.Selection[1]
+	e.addlater = r
+	if e.Sel[0] > e.Sel[1] {
+		e.Sel[0], e.Sel[1] = e.Sel[1], e.Sel[0]
+	}
+	x0, x1 := e.Sel[0], e.Sel[1]
 	if r == '\b' {
-		if x0 == x1 {
+		if x0 == x1 && x0 > 0 {
 			e.Text = append(e.Text[:x0-1], e.Text[x0:]...)
-			e.Selection[0]--
+			e.Sel[0] = x0 - 1
 		} else {
 			e.Text = append(e.Text[:x0], e.Text[x1:]...)
 		}
 	} else {
 		e.Text = append(e.Text[:x0], append([]rune{r}, e.Text[x1:]...)...)
-		e.Selection[0]++
+		e.Sel[0]++
 	}
-	e.Selection[1] = e.Selection[0]
+	e.Sel[1] = e.Sel[0]
 }
