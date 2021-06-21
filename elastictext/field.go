@@ -20,43 +20,41 @@ However correct kerning will be applied when a string of text is rendered instea
 4 когда надо нарисовать следующий символ, сверяем его с предыдущим, и применяем разницу
 */
 
-type glyph struct {
-	s *sdl.Surface
-	m *ttf.GlyphMetrics
+/*
+so.
+type kerncache map[[2]rune]int
+*/
+
+// Glyph contains information about rendered rune
+type Glyph struct {
+	t  *sdl.Texture
+	m  *ttf.GlyphMetrics
+	cl sdl.Rect
 }
 
-// ElasticText is an elastic tabstop text box
-type ElasticText struct {
-	R    *sdl.Renderer
-	Font *ttf.Font
-	//GlyphCache map[rune]glyph
-	Where XYWH
-	Limit bool
-	Text  []rune
-	Color uint32
+// TedText is an elastic tabstop text box
+type TedText struct {
+	R          *sdl.Renderer
+	Font       *ttf.Font
+	GlyphCache map[rune]Glyph
+	Where      XYWH
+	Limit      bool
+	Text       []rune
+	Color      uint32
 	//colors [][]uint
 	//tabs [][]uint
 }
 
-// func (e *ElasticText) solvetabs() {
+// func (e *TedText) solvetabs() {
 
 // }
 
-// Draw is a my little typesetter
-func (e *ElasticText) Draw() {
+func (e *TedText) mylittletypesetter() {
 	f := e.Font
 	characc := 0
 	lineacc := f.LineSkip()
 
-	// maybe global cache? but i don't think it will be necessary
-	// in the case of single field. oh, i get it
-	// todo.
-	rcache := make(map[rune]glyph)
-	defer func() {
-		for _, c := range rcache {
-			c.s.Free()
-		}
-	}()
+	rcache := e.GlyphCache
 	for _, r := range e.Text {
 		if _, k := rcache[r]; !k {
 			m, err := f.GlyphMetrics(r)
@@ -67,19 +65,35 @@ func (e *ElasticText) Draw() {
 			if err != nil {
 				panic(err)
 			}
-			rcache[r] = glyph{s, m}
+			t, err := e.R.CreateTextureFromSurface(s)
+			if err != nil {
+				panic(err)
+			}
+			cl := s.ClipRect
+			rcache[r] = Glyph{t, m, cl}
 		}
-
-		characc += rcache[r].m.Advance
 		if r == '\n' {
 			lineacc += f.LineSkip()
+			characc = 0
+			continue
 		}
-
+		t := rcache[r].t
+		cl := rcache[r].cl
+		e.R.Copy(
+			t,
+			&cl,
+			(FromSDL(cl).Move(At(characc, lineacc).Wh(0, 0))).ToSDL(),
+		)
+		characc += rcache[r].m.Advance
 	}
+}
 
+// Draw paints object to the screen
+func (e *TedText) Draw() {
+	e.mylittletypesetter()
 }
 
 // Mouse as in Drawer
-func (e *ElasticText) Mouse(at XY, buttons int, delta int) int {
+func (e *TedText) Mouse(at XY, buttons int, delta int) int {
 	return 0
 }

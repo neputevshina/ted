@@ -37,6 +37,10 @@ type XYWH struct {
 	X, Y, W, H int
 }
 
+func FromSDL(r sdl.Rect) XYWH {
+	return Rect(int(r.X), int(r.Y), int(r.W), int(r.H))
+}
+
 // Extrude creates a new rect by adding a margin to the all sides
 func (x XYWH) Extrude(length int) XYWH {
 	return Rect(x.X+length, x.Y+length, x.W-length*2, x.H-length*2)

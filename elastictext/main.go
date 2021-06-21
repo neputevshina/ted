@@ -11,10 +11,12 @@ var window *sdl.Window
 
 // G is a global window rendeder for an application
 var G *sdl.Renderer
-var et ElasticText
+var et TedText
 
 // Gfoint is a global application font
 var Gfoint *ttf.Font
+
+var gcache = make(map[rune]Glyph)
 
 func init() {
 	var err error
@@ -33,26 +35,36 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	if Gfoint, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
+	if Gfoint, err = ttf.OpenFont(`./Go-Regular.ttf`, 12); err != nil {
 		panic(err)
 	}
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
-	et = ElasticText{
-		Where: Rect(0, 0, 800, 600),
-		R:     G,
-		Font:  Gfoint,
+	et = TedText{
+		Text: []rune(`пошёл нахуй	шалава ебаная
+хахахаха я наебал тебя
+
+amogus
+
+
+nigger
+`),
+		GlyphCache: gcache,
+		Where:      Rect(0, 0, 800, 600),
+		R:          G,
+		Font:       Gfoint,
 	}
 }
 
 func main() {
 	go func() {
 		for {
-			G.SetDrawColor(colx(0x000000ff))
+			G.SetDrawColor(colx(0xffffffff))
 			G.Clear()
 			et.Draw()
 			G.Present()
 			window.UpdateSurface()
+			//fmt.Println(len(gcache))
 		}
 	}()
 	// editor resizing, because fuck sdl
@@ -69,6 +81,9 @@ func main() {
 		return false
 	}, window)
 	eventloop()
+	// for _, g := range gcache {
+	// 	g.t.Destroy()
+	// }
 	window.Destroy()
 	sdl.Quit()
 	os.Exit(0)
