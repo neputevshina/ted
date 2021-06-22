@@ -61,8 +61,9 @@ type TedText struct {
 	Font        *ttf.Font
 	SpriteCache *SpriteCache
 	Where       XYWH
-	Limit       bool
-	Text        []rune
+	Limit       bool    // Cull text to its hitbox
+	Oneliner    bool    // Display only first line and ignore newlines input
+	Text        *[]rune //
 	Color       uint32
 	Sel         [2]int
 	addlater    rune
@@ -109,7 +110,7 @@ func (e *TedText) mylittletypesetter() {
 	lineacc := 0
 
 	rcache := e.SpriteCache.Cache
-	for _, r := range e.Text {
+	for _, r := range *e.Text {
 		//e.SpriteCache.Update(r)
 		if r == '\n' {
 			lineacc += f.LineSkip()
@@ -145,12 +146,12 @@ func (e *TedText) paintsel() {
 
 	var line XYWH
 
-	if esel[1] >= len(e.Text) {
-		esel[1] = len(e.Text)
+	if esel[1] >= len(*e.Text) {
+		esel[1] = len(*e.Text)
 	}
 
 	inside := false
-	for i, r := range e.Text {
+	for i, r := range *e.Text {
 		// cache is already there, skip
 		if i == esel[0] {
 			inside = true
@@ -189,7 +190,7 @@ func (e *TedText) paintsel() {
 		characc += e.SpriteCache.Cache[r].m.Advance
 	}
 
-	if esel[1] == len(e.Text) {
+	if esel[1] == len(*e.Text) {
 		e.R.SetDrawColor(colx(0x000000ff))
 		e.R.FillRect(Rect(line.X+line.W-1, line.Y, 1, line.H).ToSDL())
 	}
@@ -262,7 +263,7 @@ func measchar(where []rune, glyphs map[rune]Sprite, font *ttf.Font, at XY) (j in
 // Mouse as in Drawer
 func (e *TedText) Mouse(at XY, buttons int, delta int) int {
 	at = at.Move(At(-e.Where.X, -e.Where.Y))
-	measure := measchar(e.Text, e.SpriteCache.Cache, e.Font, at)
+	measure := measchar(*e.Text, e.SpriteCache.Cache, e.Font, at)
 	if buttons != 0 {
 		if buttons == delta {
 			e.Sel[0] = measure
@@ -289,13 +290,13 @@ func (e *TedText) TextInput(b [32]byte) {
 	x0, x1 := e.Sel[0], e.Sel[1]
 	if r == '\b' {
 		if x0 == x1 && x0 > 0 {
-			e.Text = append(e.Text[:x0-1], e.Text[x0:]...)
+			*e.Text = append((*e.Text)[:x0-1], (*e.Text)[x0:]...)
 			e.Sel[0] = x0 - 1
 		} else {
-			e.Text = append(e.Text[:x0], e.Text[x1:]...)
+			(*e.Text) = append((*e.Text)[:x0], (*e.Text)[x1:]...)
 		}
 	} else {
-		e.Text = append(e.Text[:x0], append([]rune{r}, e.Text[x1:]...)...)
+		(*e.Text) = append((*e.Text)[:x0], append([]rune{r}, (*e.Text)[x1:]...)...)
 		e.Sel[0]++
 	}
 	e.Sel[1] = e.Sel[0]
