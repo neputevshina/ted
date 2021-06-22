@@ -42,7 +42,8 @@ const (
 // drawer.Touch messages
 const (
 	_ = iota
-	OverKnob
+	MoveMe
+	ResizeMe
 	OverInlet
 	OverOutlet
 	// OverTextA

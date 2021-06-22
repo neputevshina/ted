@@ -1,8 +1,6 @@
 package main
 
 import (
-	"unicode/utf8"
-
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -129,7 +127,7 @@ func (e *TedText) mylittletypesetter() {
 		e.R.Copy(
 			t,
 			&cl,
-			(FromSDL(cl).Move(e.Where).Move(At(characc, lineacc).Wh(0, 0))).ToSDL(),
+			(FromSDL(cl).Move(e.Where.Xy()).Move(At(characc, lineacc))).ToSDL(),
 		)
 		characc += rcache[r].m.Advance
 	}
@@ -162,7 +160,7 @@ func (e *TedText) paintsel() {
 		// cache is already there, skip
 		if i == esel[0] {
 			inside = true
-			line = Rect(characc, lineacc, 0, fh).Move(e.Where)
+			line = Rect(characc, lineacc, 0, fh).Move(e.Where.Xy())
 
 			e.R.SetDrawColor(colx(0x000000ff))
 			e.R.FillRect(Rect(line.X, line.Y, 1, line.H).ToSDL())
@@ -178,7 +176,7 @@ func (e *TedText) paintsel() {
 			}
 			lineacc += fl
 			characc = 0
-			line = Rect(characc, lineacc, 0, fh).Move(e.Where)
+			line = Rect(characc, lineacc, 0, fh).Move(e.Where.Xy())
 			continue
 		}
 		if i == esel[1] {
@@ -206,14 +204,11 @@ func (e *TedText) paintsel() {
 
 // Draw paints object to the screen
 func (e *TedText) Draw() {
-	//if e.dirty { // TODO
 	// sooooo, with this shitty »hack« we will update only incoming runes! yay!!
 	// and this speeds up almost nothing.
 	// fucking add blitting cache, for god's sake
 	e.SpriteCache.Update(e.addlater)
 	e.mylittletypesetter()
-	//e.dirty = false
-	//}
 	e.paintsel()
 }
 
@@ -222,16 +217,12 @@ func measline(font *ttf.Font, at XY) int {
 	zero := at.Y
 	fh := font.Height()
 	rem := 0
-	// if zero%fh > fh/2 {
-	// 	rem = 1
-	// }
 	return zero/fh + rem
 }
 
 func (e *TedText) measchar(at XY) (j int) {
 	where := *e.Text
 	glyphs := e.SpriteCache.Cache
-
 	// skip lines
 	atline := measline(e.Font, at)
 	if e.Oneliner {
@@ -247,8 +238,7 @@ func (e *TedText) measchar(at XY) (j int) {
 			atline--
 		}
 	}
-	zero := at.X //.Move(at).X
-
+	zero := at.X
 	zero -= glyphs[where[0]].m.Advance / 2
 	characc := 0
 	last := 0
@@ -305,8 +295,7 @@ func (e *TedText) Mouse(at XY, buttons int, delta int) int {
 	return 1
 }
 
-func (e *TedText) TextInput(b [32]byte) {
-	r, _ := utf8.DecodeRune(b[:])
+func (e *TedText) TextInput(r rune) {
 	t := *e.Text
 	e.addlater = r
 	if e.Oneliner && r == '\n' {
