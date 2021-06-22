@@ -7,7 +7,7 @@ const (
 	inmodes
 )
 
-type bufer struct {
+type buf struct {
 	Where     XYWH
 	hold      bool
 	inlet     node
@@ -19,19 +19,19 @@ type bufer struct {
 	Cursor    [2]uint
 }
 
-func (b *bufer) Inlet() *node {
+func (b *buf) Inlet() *node {
 	return &b.inlet
 }
 
-func (b *bufer) Limits() (WH, WH) {
-	return Wt(32, 32), Wt(-1, -1)
+func (b *buf) Limits() (WH, WH) {
+	return Wt(32, 32), NoLimit()
 }
 
-func (b *bufer) Outlets() *map[node]struct{} {
+func (b *buf) Outlets() *map[node]struct{} {
 	return &b.outlets
 }
 
-func (b *bufer) Draw() {
+func (b *buf) Draw() {
 	xy := b.Where
 	G.SetDrawColor(colx(BoxBorderColor))
 	G.FillRect(xy.ToSDL())
@@ -52,31 +52,32 @@ func (b *bufer) Draw() {
 	G.FillRect(knobpos(xy).ToSDL())
 }
 
-func (b *bufer) Mouse(at XY, buttons int, delta int) int {
+func (b *buf) Mouse(at XY, buttons int, delta int) int {
 	if knobpos(b.Where).Inside(at) {
-		return OverKnob
+		if buttons == MouseLeft {
+			return MoveMe
+		}
+		if buttons == MouseRight {
+			return ResizeMe
+		}
 	}
 	if inletpos(b.Where).Inside(at) {
-		if buttons == MouseLeft && delta != 0 {
-			println("yes")
+		if buttons == delta && buttons == MouseLeft {
 			b.inletmode = (b.inletmode + 1) % inmodes
-			b.hold = true
-			return 0
 		}
 		return OverInlet
 	}
 	if outletpos(b.Where).Inside(at) {
 		return OverOutlet
 	}
-	b.hold = false
 	return 0
 }
 
-func (b *bufer) TextInput(text [32]byte) {
-	b.Entry.TextInput(text)
+func (b *buf) TextInput(r rune) {
+	b.Entry.TextInput(r)
 }
 
-func (b *bufer) Rect() *XYWH {
+func (b *buf) Rect() *XYWH {
 	return &b.Where
 }
 

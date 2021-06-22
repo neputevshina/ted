@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"runtime/pprof"
+	"unicode/utf8"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -82,55 +83,6 @@ func main() {
 	os.Exit(0)
 }
 
-// func eventloop() {
-// 	wait := func() sdl.Event {
-// 		return sdl.WaitEventTimeout(1000)
-// 		//return sdl.PollEvent()
-// 	}
-// 	var e sdl.Event
-// 	for {
-// 	wt:
-// 		e = wait()
-// 		if e == nil {
-// 			goto wt
-// 		}
-
-// 		switch e.(type) {
-// 		case *sdl.QuitEvent:
-// 			return
-// 		}
-
-// 		switch j := e.(type) {
-// 		case *sdl.WindowEvent:
-// 			if j.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
-// 				println("A")
-// 				ted.Winsize = Wt(int(j.Data1), int(j.Data2))
-// 			}
-// 		case *sdl.TextInputEvent:
-// 			// ted.TextInput(j.Text)
-// 		case *sdl.KeyboardEvent:
-// 			//keyboard(e.(*sdl.KeyboardEvent))
-// 		case *sdl.MouseMotionEvent:
-// 			ted.Mouse(At(int(j.X), int(j.Y)), int(j.State))
-// 		case *sdl.MouseButtonEvent:
-// 			ch := 0
-// 			switch j.Button {
-// 			case sdl.BUTTON_LEFT:
-// 				ch = MouseLeft
-// 			case sdl.BUTTON_MIDDLE:
-// 				ch = MouseMiddle
-// 			case sdl.BUTTON_RIGHT:
-// 				ch = MouseRight
-// 			}
-// 			if j.State == sdl.RELEASED {
-// 				ch = 0
-// 			}
-// 			ted.Mouse(At(int(j.X), int(j.Y)), ch)
-// 		}
-
-// 	}
-// }
-
 var mouseprev int
 var moused int
 
@@ -160,7 +112,8 @@ func eventloop() {
 				ted.Where = Wt(int(e.Data1), int(e.Data2))
 			}
 		case *sdl.TextInputEvent:
-			ted.TextInput(e.Text)
+			r, _ := utf8.DecodeRune(e.Text[:])
+			ted.TextInput(r)
 		case *sdl.MouseMotionEvent:
 			s := int(e.State)
 			moused = mouseprev ^ s
@@ -181,15 +134,16 @@ func eventloop() {
 			} else {
 				ted.Mouse(At(int(e.X), int(e.Y)), ch, ch)
 			}
+			mouseprev = ch
 		case *sdl.KeyboardEvent:
 			if e.State == sdl.PRESSED {
 				switch e.Keysym.Sym {
 				case sdl.K_RETURN:
-					ted.TextInput([32]byte{'\n'})
+					ted.TextInput('\n')
 				case sdl.K_BACKSPACE:
-					ted.TextInput([32]byte{'\b'})
+					ted.TextInput('\b')
 				case sdl.K_DELETE:
-					ted.TextInput([32]byte{'\x7f'})
+					ted.TextInput('\x7f')
 				}
 			}
 		}

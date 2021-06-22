@@ -26,9 +26,18 @@ func (w WH) Val() (int, int) {
 	return w.W, w.H
 }
 
-// Wh adds W and H components to the XY to yield an XYWH
-func (x XY) Wh(w int, h int) XYWH {
+// Wt adds W and H components to the XY to yield an XYWH
+func (x XY) Wt(w int, h int) XYWH {
 	return XYWH{x.X, x.Y, w, h}
+}
+
+func (x XY) Wh() WH {
+	return WH{x.X, x.Y}
+}
+
+// Dxy returns difference of two xys
+func Dxy(xy XY, at XY) XY {
+	return At(xy.X-at.X, xy.Y-at.Y)
 }
 
 // WH is a point intended for storing width and height
@@ -59,7 +68,7 @@ func (x XYWH) Inside(xy XY) bool {
 }
 
 // Move translates x by y
-func (x XYWH) Move(y XYWH) XYWH {
+func (x XYWH) Move(y XY) XYWH {
 	return Rect(x.X+y.X, x.Y+y.Y, x.W, x.H)
 }
 
@@ -86,6 +95,11 @@ func (x XYWH) Val() (int, int, int, int) {
 // At is a constructor for XY
 func At(x, y int) XY {
 	return XY{X: x, Y: y}
+}
+
+func NoLimit() WH {
+	const max = int(^uint(0) >> 1)
+	return WH{max, max}
 }
 
 // Wt is a constructor for Wt

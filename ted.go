@@ -1,20 +1,17 @@
 package main
 
-import "fmt"
-
 type tedstate struct {
-	Where    WH
-	Objects  []node
-	Pos      XY
-	focus    int
-	hold     int
-	over     int
-	holdcode int
-	prev     int
-	doesconn bool
-	start    XY
-	current  XY
-	NewBox   button
+	Where     WH
+	Objects   []node
+	Pos       XY
+	focus     int
+	hold      int
+	holdcode  int
+	prev      int
+	doingconn bool
+	start     XY
+	end       XY
+	NewBox    button
 }
 
 func newbrect(winsize WH) XYWH {
@@ -59,85 +56,176 @@ func (t *tedstate) Draw() {
 		*t.NewBox.Rect() = newbrect(t.Where)
 		t.NewBox.Draw()
 	}
-	if t.doesconn {
-		G.DrawLine(int32(t.start.X), int32(t.start.Y), int32(t.current.X), int32(t.current.Y))
+	if t.doingconn {
+		G.DrawLine(int32(t.start.X), int32(t.start.Y), int32(t.end.X), int32(t.end.Y))
+	}
+}
+
+func (t *tedstate) over(at XY) int {
+	for i := len(t.Objects) - 1; i >= 0; i-- {
+		e := t.Objects[i]
+		if e.Rect().Inside(at) {
+			return i
+		}
+	}
+	return -1
+}
+
+func (t *tedstate) outlets(at XY, buttons, delta int, over, code int) {
+	if buttons == delta && buttons == MouseLeft &&
+		code == OverOutlet {
+		t.doingconn = true
+		t.start = at
+	}
+	if buttons == delta && buttons == MouseRight &&
+		code == OverOutlet {
+		disconnect(t.Objects[over])
+	}
+	if t.doingconn {
+		if buttons == MouseLeft && delta == 0 {
+			t.end = at
+		}
+		if buttons == 0 && delta == MouseLeft {
+			if t.holdcode == OverOutlet && code == OverInlet && over >= 0 {
+				connect(t.Objects[t.hold], t.Objects[over])
+				t.doingconn = false
+			}
+			t.hold = -1
+			t.holdcode = 0
+		}
+	}
+}
+
+func (t *tedstate) move(at XY, buttons, delta int, over, code int) {
+	if buttons == delta && buttons != 0 {
+		if code == MoveMe || code == ResizeMe {
+			t.start = at
+		}
+	}
+	if buttons != 0 && delta == 0 && t.hold >= 0 {
+		dif := Dxy(at, t.start)
+		r := t.Objects[t.hold].Rect()
+		if t.holdcode == MoveMe {
+			r.X += dif.X
+			r.Y += dif.Y
+			t.start = at
+		}
+		if t.holdcode == ResizeMe {
+			l, u := t.Objects[t.hold].Limits()
+			if r.W+dif.X <= l.W || r.W+dif.X >= u.W {
+				dif.X = 0
+			}
+			if r.H+dif.Y <= l.H || r.H+dif.Y >= u.H {
+				dif.Y = 0
+			}
+			r.W += dif.X
+			r.H += dif.Y
+			t.start = at
+		}
+		return
 	}
 }
 
 func (t *tedstate) mousefield(at XY, buttons, delta int) {
-	over := false
-	for i := len(t.Objects) - 1; i >= 0; i-- {
-		e := t.Objects[i]
-		if e.Rect().Inside(at) {
-			over = true
-			t.over = i
-			if t.hold >= 0 {
-				break
-			}
-			t.holdcode = e.Mouse(at, buttons, delta)
-			t.focus = i
-			t.start = at
-			if t.hold < 0 && buttons != 0 {
-				// to the top
-				t.Objects = append(append(t.Objects[:i], t.Objects[i+1:]...), e)
-				t.focus = len(t.Objects) - 1
-				t.hold = (t.focus)
-			}
-			break
-		}
+	over := t.over(at)
+	code := 0
+	if over >= 0 {
+		code = t.Objects[over].Mouse(at, buttons, delta)
 	}
-	if !over && t.hold < 0 {
-		t.focus = -1
-	}
-	if t.focus >= 0 && t.focus == t.hold {
-		if t.holdcode == OverKnob {
-			rc := t.Objects[t.hold].Rect()
-			if buttons == MouseLeft {
-				rc.X += at.X - t.start.X
-				rc.Y += at.Y - t.start.Y
-				t.start = at
-			}
-			if buttons == MouseRight {
-				e := rc
-				dw := at.X - t.start.X
-				dh := at.Y - t.start.Y
-				e.W += dw
-				e.H += dh
-				t.start = at
-			}
-		}
-		if t.holdcode == OverOutlet && delta != 0 {
-			t.doesconn = true
-		}
 
-		o := t.Objects[t.over]
-		hc2 := o.Mouse(at, buttons, delta)
-
-		if hc2 == OverInlet {
-			if t.doesconn {
-				h := t.Objects[t.hold]
-				if delta == MouseLeft && buttons == 0 {
-					connect(h, o)
-					t.doesconn = false
-				}
-			} else if delta == 0 && buttons == MouseRight {
-				delinlet(o)
-			}
+	if buttons == delta && buttons != 0 {
+		if over >= 0 {
+			t.Objects = append(
+				append(t.Objects[:over], t.Objects[over+1:]...),
+				t.Objects[over],
+			)
+			t.hold = len(t.Objects) - 1
+			t.holdcode = code
 		}
 	}
-	if buttons == 0 {
-		t.hold = -1
-		t.doesconn = false
+	t.move(at, buttons, delta, over, code)
+	t.outlets(at, buttons, delta, over, code)
+	if buttons == 0 && delta != 0 {
+
 	}
+	// click with the...
+
+	// hold...
+	// release over...
+
+	// over := false
+	// for i := len(t.Objects) - 1; i >= 0; i-- {
+	// 	e := t.Objects[i]
+	// 	if e.Rect().Inside(at) {
+	// 		over = true
+	// 		t.over = i
+	// 		if t.hold >= 0 {
+	// 			break
+	// 		}
+	// 		t.holdcode = e.Mouse(at, buttons, delta)
+	// 		t.focus = i
+	// 		t.start = at
+	// 		if t.hold < 0 && buttons != 0 {
+	// 			// to the top
+	// 			t.Objects = append(append(t.Objects[:i], t.Objects[i+1:]...), e)
+	// 			t.focus = len(t.Objects) - 1
+	// 			t.hold = (t.focus)
+	// 		}
+	// 		break
+	// 	}
+	// }
+	// if !over && t.hold < 0 {
+	// 	t.focus = -1
+	// }
+	// if t.focus >= 0 && t.focus == t.hold {
+	// 	if t.holdcode == OverKnob {
+	// 		rc := t.Objects[t.hold].Rect()
+	// 		if buttons == MouseLeft {
+	// 			rc.X += at.X - t.start.X
+	// 			rc.Y += at.Y - t.start.Y
+	// 			t.start = at
+	// 		}
+	// 		if buttons == MouseRight {
+	// 			e := rc
+	// 			dw := at.X - t.start.X
+	// 			dh := at.Y - t.start.Y
+	// 			e.W += dw
+	// 			e.H += dh
+	// 			t.start = at
+	// 		}
+	// 	}
+	// 	if t.holdcode == OverOutlet && delta != 0 {
+	// 		t.doesconn = true
+	// 	}
+
+	// 	o := t.Objects[t.over]
+	// 	hc2 := o.Mouse(at, buttons, delta)
+
+	// 	if hc2 == OverInlet {
+	// 		if t.doesconn {
+	// 			h := t.Objects[t.hold]
+	// 			if delta == MouseLeft && buttons == 0 {
+	// 				connect(h, o)
+	// 				t.doesconn = false
+	// 			}
+	// 		} else if delta == 0 && buttons == MouseRight {
+	// 			delinlet(o)
+	// 		}
+	// 	}
+	// }
+	// if buttons == 0 {
+	// 	t.hold = -1
+	// 	t.doesconn = false
+	// }
 }
 
 func connect(out node, in node) {
-	(*out.Outlets())[in] = struct{}{}
-	delinlet(in)
-	*in.Inlet() = out
+	(*in.Outlets())[out] = struct{}{}
+	disconnect(out)
+	*out.Inlet() = in
 }
 
-func delinlet(o node) {
+func disconnect(o node) {
 	if *o.Inlet() != nil {
 		if _, has := (*(*o.Inlet()).Outlets())[o]; has {
 			delete(*((*o.Inlet()).Outlets()), o)
@@ -147,24 +235,21 @@ func delinlet(o node) {
 }
 
 func (t *tedstate) Mouse(at XY, buttons, delta int) {
-	fmt.Println(at, buttons, t.prev, delta)
 	if t.NewBox.Rect().Inside(at) && t.hold < 0 {
 		if buttons == MouseLeft && delta != 0 {
-			t.Objects = append(t.Objects, &bufer{
+			t.Objects = append(t.Objects, &buf{
 				Where:   Rect(at.X-100+4, at.Y-100+4, 100, 100),
 				outlets: make(map[node]struct{}, 10),
 			})
-			t.start = at
 			t.hold = len(t.Objects) - 1
-			t.focus = t.hold
-			t.holdcode = t.Objects[t.focus].Mouse(at, buttons, delta)
+			t.holdcode = MoveMe
+			t.start = at
 		}
 	} else {
 		t.mousefield(at, buttons, delta)
 	}
-	t.prev = buttons
 }
 
-func (t *tedstate) TextInput(b [32]byte) {
+func (t *tedstate) TextInput(r rune) {
 
 }
