@@ -57,8 +57,9 @@ func init() {
 	gcache = NewSpriteCache(G, Gfont, rgba(0x000000ff))
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
+	fr := conv(fieldgo)
 	et = TedText{
-		Text:        conv(fieldgo),
+		Text:        &fr,
 		Sel:         [2]int{9, 12},
 		SpriteCache: gcache,
 		Where:       Rect(20, 20, 800-20, 600-20),
@@ -67,7 +68,7 @@ func init() {
 		addlater:    'a',
 		//dirty:       true,
 	}
-	gcache.Generate(et.Text)
+	gcache.Generate(*et.Text)
 }
 
 func main() {
