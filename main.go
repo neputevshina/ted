@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"os"
+	"runtime/pprof"
 
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
@@ -12,6 +14,8 @@ var window *sdl.Window
 // G is a global window rendeder for an application
 var G *sdl.Renderer
 var ted tedstate
+
+var gcache *SpriteCache
 
 // Gfont is a global application font
 var Gfont *ttf.Font
@@ -47,6 +51,11 @@ func init() {
 }
 
 func main() {
+	f, err := os.Create("ted.profile")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.StartCPUProfile(f)
 	go func() {
 		for {
 			ted.Draw()
@@ -140,6 +149,7 @@ func eventloop() {
 
 		switch event.(type) {
 		case *sdl.QuitEvent:
+			pprof.StopCPUProfile()
 			return
 		}
 
@@ -178,6 +188,8 @@ func eventloop() {
 					ted.TextInput([32]byte{'\n'})
 				case sdl.K_BACKSPACE:
 					ted.TextInput([32]byte{'\b'})
+				case sdl.K_DELETE:
+					ted.TextInput([32]byte{'\x7f'})
 				}
 			}
 		}

@@ -17,14 +17,6 @@ const (
 	NodeHeight               = 16
 )
 
-func colx(i uint32) (uint8, uint8, uint8, uint8) {
-	a := uint8(i >> 24 & 0xff)
-	r := uint8(i >> 16 & 0xff)
-	g := uint8(i >> 8 & 0xff)
-	b := uint8(i & 0xff)
-	return a, r, g, b
-}
-
 const winout = 8
 const hinout = 8
 

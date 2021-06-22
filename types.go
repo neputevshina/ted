@@ -17,6 +17,10 @@ func (x XY) Val() (int, int) {
 	return x.X, x.Y
 }
 
+func FromSDL(r sdl.Rect) XYWH {
+	return Rect(int(r.X), int(r.Y), int(r.W), int(r.H))
+}
+
 // Val explodes the struct into values
 func (w WH) Val() (int, int) {
 	return w.W, w.H

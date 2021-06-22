@@ -37,9 +37,9 @@ func (t *tedstate) Draw() {
 			G.DrawLine(int32(ou.X), int32(ou.Y), int32(in.X), int32(in.Y))
 		}
 	}
+	// super ugly, but i don't know how to implement it other way
+	// also maybe todo: pretty patchcord rendering a la max
 	for i := range t.Objects {
-		// super-ugly, but i don't know how to implement it other way
-		// also maybe todo: pretty patchcord rendering a la max
 		if i == t.focus {
 			G.SetDrawColor(colx(0x0000ffff))
 			G.FillRect(t.Objects[t.focus].Rect().Extrude(-2).ToSDL())
@@ -64,7 +64,7 @@ func (t *tedstate) Draw() {
 	}
 }
 
-func mousefield(t *tedstate, at XY, buttons, delta int) {
+func (t *tedstate) mousefield(at XY, buttons, delta int) {
 	over := false
 	for i := len(t.Objects) - 1; i >= 0; i-- {
 		e := t.Objects[i]
@@ -150,7 +150,7 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 	fmt.Println(at, buttons, t.prev, delta)
 	if t.NewBox.Rect().Inside(at) && t.hold < 0 {
 		if buttons == MouseLeft && delta != 0 {
-			t.Objects = append(t.Objects, &box{
+			t.Objects = append(t.Objects, &bufer{
 				Where:   Rect(at.X-100+4, at.Y-100+4, 100, 100),
 				outlets: make(map[node]struct{}, 10),
 			})
@@ -160,7 +160,7 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 			t.holdcode = t.Objects[t.focus].Mouse(at, buttons, delta)
 		}
 	} else {
-		mousefield(t, at, buttons, delta)
+		t.mousefield(at, buttons, delta)
 	}
 	t.prev = buttons
 }

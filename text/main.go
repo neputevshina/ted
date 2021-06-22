@@ -1,7 +1,9 @@
 package main
 
 import (
+	"log"
 	"os"
+	"runtime/pprof"
 	"unicode/utf8"
 
 	_ "embed"
@@ -66,14 +68,26 @@ func init() {
 		R:           G,
 		Font:        Gfont,
 		addlater:    'a',
+		//Oneliner:    true,
 		//dirty:       true,
 	}
 	gcache.Generate(*et.Text)
 }
 
+var update = make(chan struct{})
+
 func main() {
+	//pprof
+
+	f, err := os.Create("field.profile")
+	if err != nil {
+		log.Fatal(err)
+	}
+	pprof.StartCPUProfile(f)
+
 	go func() {
 		for {
+			//<-update
 			G.SetDrawColor(colx(0xffffffff))
 			G.Clear()
 			et.Draw()
@@ -119,9 +133,10 @@ func eventloop() {
 		if event == nil {
 			goto wt
 		}
-
+		//update <- struct{}{}
 		switch event.(type) {
 		case *sdl.QuitEvent:
+			pprof.StopCPUProfile()
 			return
 		}
 
@@ -160,6 +175,8 @@ func eventloop() {
 					et.TextInput([32]byte{'\n'})
 				case sdl.K_BACKSPACE:
 					et.TextInput([32]byte{'\b'})
+				case sdl.K_DELETE:
+					et.TextInput([32]byte{'\x7f'})
 				}
 			}
 		}
