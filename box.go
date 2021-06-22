@@ -7,30 +7,31 @@ const (
 	inmodes
 )
 
-type box struct {
+type bufer struct {
 	Where     XYWH
 	hold      bool
 	inlet     node
 	inletmode int
 	outlets   map[node]struct{}
-	Lines     []string
+	Text      []rune
+	Entry     *TedText
 	Scrollpos uint
 	Cursor    [2]uint
 }
 
-func (b *box) Inlet() *node {
+func (b *bufer) Inlet() *node {
 	return &b.inlet
 }
 
-func (b *box) Limits() (WH, WH) {
+func (b *bufer) Limits() (WH, WH) {
 	return Wt(32, 32), Wt(-1, -1)
 }
 
-func (b *box) Outlets() *map[node]struct{} {
+func (b *bufer) Outlets() *map[node]struct{} {
 	return &b.outlets
 }
 
-func (b *box) Draw() {
+func (b *bufer) Draw() {
 	xy := b.Where
 	G.SetDrawColor(colx(BoxBorderColor))
 	G.FillRect(xy.ToSDL())
@@ -51,7 +52,7 @@ func (b *box) Draw() {
 	G.FillRect(knobpos(xy).ToSDL())
 }
 
-func (b *box) Mouse(at XY, buttons int, delta int) int {
+func (b *bufer) Mouse(at XY, buttons int, delta int) int {
 	if knobpos(b.Where).Inside(at) {
 		return OverKnob
 	}
@@ -71,13 +72,11 @@ func (b *box) Mouse(at XY, buttons int, delta int) int {
 	return 0
 }
 
-// text input in modern oses is broken: why not just use ascii BS when you
-// have to erase a symbol?
-func (b *box) TextInput(text [32]byte) {
-
+func (b *bufer) TextInput(text [32]byte) {
+	b.Entry.TextInput(text)
 }
 
-func (b *box) Rect() *XYWH {
+func (b *bufer) Rect() *XYWH {
 	return &b.Where
 }
 

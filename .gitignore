@@ -3,3 +3,4 @@ ted
 *.ttf
 text/*.ttf
 text/text
+*.profile
