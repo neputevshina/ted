@@ -210,8 +210,8 @@ func (e *TedText) Draw() {
 }
 
 // actually, this func is part of the style
-func measline(font *ttf.Font, base XYWH, at XY) int {
-	zero := base.Xy().Move(at).Y
+func measline(font *ttf.Font, at XY) int {
+	zero := at.Y
 	fh := font.Height()
 	rem := 0
 	// if zero%fh > fh/2 {
@@ -220,9 +220,9 @@ func measline(font *ttf.Font, base XYWH, at XY) int {
 	return zero/fh + rem
 }
 
-func measchar(where []rune, glyphs map[rune]Sprite, font *ttf.Font, base XYWH, at XY) (j int) {
+func measchar(where []rune, glyphs map[rune]Sprite, font *ttf.Font, at XY) (j int) {
 	// skip lines
-	atline := measline(font, base, at)
+	atline := measline(font, at)
 	for i, r := range where {
 		if atline == 0 {
 			j = i
@@ -232,7 +232,7 @@ func measchar(where []rune, glyphs map[rune]Sprite, font *ttf.Font, base XYWH, a
 			atline--
 		}
 	}
-	zero := base.Xy().Move(at).X
+	zero := at.X //.Move(at).X
 
 	zero -= glyphs[where[0]].m.Advance / 2
 	characc := 0
@@ -261,21 +261,23 @@ func measchar(where []rune, glyphs map[rune]Sprite, font *ttf.Font, base XYWH, a
 
 // Mouse as in Drawer
 func (e *TedText) Mouse(at XY, buttons int, delta int) int {
-	//at = at.Move(At(-e.Where.X, -e.Where.Y))
-	measure := measchar(e.Text, e.SpriteCache.Cache, e.Font, e.Where, at)
-	if buttons == MouseLeft && delta == MouseLeft {
-		e.Sel[0] = measure
-	}
-	if buttons == MouseLeft && delta == 0 &&
-		(measure >= e.Sel[0] || measure <= e.Sel[1]) {
-		e.Sel[1] = measure
-	}
-	if buttons == 0 && delta == MouseLeft {
-		if measure == e.Sel[0] {
-			e.Sel[1] = e.Sel[0]
+	at = at.Move(At(-e.Where.X, -e.Where.Y))
+	measure := measchar(e.Text, e.SpriteCache.Cache, e.Font, at)
+	if buttons != 0 {
+		if buttons == delta {
+			e.Sel[0] = measure
+			e.Sel[1] = measure
+		}
+		if delta == 0 {
+			if measure <= e.Sel[0] {
+				e.Sel[0] = measure
+			} else {
+				e.Sel[1] = measure
+			}
+
 		}
 	}
-	return 0
+	return 1
 }
 
 func (e *TedText) TextInput(b [32]byte) {

@@ -61,7 +61,7 @@ func init() {
 		Text:        conv(fieldgo),
 		Sel:         [2]int{9, 12},
 		SpriteCache: gcache,
-		Where:       Rect(0, 0, 800-20, 600-20),
+		Where:       Rect(20, 20, 800-20, 600-20),
 		R:           G,
 		Font:        Gfont,
 		addlater:    'a',
