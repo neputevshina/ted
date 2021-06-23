@@ -44,12 +44,7 @@ func init() {
 	gcache = NewFontSprites(G, Gfont, rgba(0x000000ff))
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
-	ted = tedstate{
-		Where:  Wt(800, 600),
-		focus:  -1,
-		hold:   -1,
-		NewBox: button{},
-	}
+	createted()
 }
 
 func main() {
