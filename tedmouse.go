@@ -1,7 +1,26 @@
 package main
 
+func (t *tedstate) hit(at XY, top bool) drawer {
+	for i := len(t.Objects) - 1; i >= 0; i-- {
+		e := t.Objects[i]
+		if e.Rect().Inside(at) {
+			if top {
+				t.Objects = append(
+					append(t.Objects[:i], t.Objects[i+1:]...),
+					t.Objects[i],
+				)
+			}
+			return e
+		}
+	}
+	if t.NewBox.Rect().Inside(at) {
+		return &t.NewBox
+	}
+	return nil
+}
+
 func (t *tedstate) Mouse(at XY, buttons, delta int) {
-	t.ov = t.hit(at)
+	t.ov = t.hit(at, false)
 	if t.ov != nil {
 		t.code = t.ov.Mouse(at, buttons, delta)
 	}
@@ -29,12 +48,21 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 		}
 		if t.code == 10 {
 			if t.hold == nil {
-				{
-					t.Objects = append(t.Objects, newbuf(Rect(at.X-100+4, at.Y-100+4, 100, 100)))
-					t.hold = t.Objects[len(t.Objects)-1]
-					t.hcode = MoveMe
-					t.start = at
-				}
+				t.Objects = append(t.Objects, newbuf(Rect(at.X-100+BoxKnobsSize/24, at.Y-100+BoxKnobsSize/2, 100, 100)))
+				t.hold = t.Objects[len(t.Objects)-1]
+				t.hcode = MoveMe
+				t.start = at
+			}
+		}
+		if t.code == 11 {
+			if t.hold == nil {
+				c := newcmd(XYWH{})
+				lo, _ := c.Limits()
+				c.Where = Rect(at.X-lo.W+BoxKnobsSize/2, at.Y-lo.H+BoxKnobsSize/2, lo.W, lo.H)
+				t.Objects = append(t.Objects, c)
+				t.hold = t.Objects[len(t.Objects)-1]
+				t.hcode = MoveMe
+				t.start = at
 			}
 		}
 

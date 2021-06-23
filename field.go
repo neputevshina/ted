@@ -25,8 +25,6 @@ so.
 type kerncache map[[2]rune]int
 */
 
-type Bang struct{}
-
 // Sprite contains information about rendered rune
 type Sprite struct {
 	t  *sdl.Texture
@@ -72,11 +70,13 @@ type TedText struct {
 
 func NewTedText(text *[]rune, r *sdl.Renderer, f *FontSprites, oneliner, limit bool) *TedText {
 	return &TedText{
-		R:       r,
-		Sprites: f,
-		Text:    text,
-		Sel:     [2]int{0, 0},
-		Wakeup:  make(chan struct{}, 1),
+		R:        r,
+		Sprites:  f,
+		Text:     text,
+		Oneliner: oneliner,
+		Limit:    limit,
+		Sel:      [2]int{0, 0},
+		Wakeup:   make(chan struct{}, 1),
 	}
 }
 
