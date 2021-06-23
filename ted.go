@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type tedstate struct {
 	Where     WH
 	Objects   []node
@@ -82,87 +80,7 @@ func disconnect(o node) {
 }
 
 func (t *tedstate) Mouse(at XY, buttons, delta int) {
-	if t.NewBox.Rect().Inside(at) && t.hold < 0 {
-		if buttons == MouseLeft && delta != 0 {
-			t.Objects = append(t.Objects, newbuf(Rect(at.X-100+4, at.Y-100+4, 100, 100)))
-			t.hold = len(t.Objects) - 1
-			t.holdcode = MoveMe
-			t.start = at
-		}
-		return
-	}
 
-	over := t.over(at)
-	t.focus = over
-	code := 0
-	if over >= 0 {
-		code = t.Objects[over].Mouse(at, buttons, delta)
-	}
-
-	if buttons == delta && buttons != 0 {
-		t.start = at
-		println("P")
-		if over >= 0 && over != t.hold {
-			t.Objects = append(
-				append(t.Objects[:over], t.Objects[over+1:]...),
-				t.Objects[over],
-			)
-			t.hold = len(t.Objects) - 1
-			t.holdcode = code
-		}
-		if buttons == MouseLeft {
-			if code == OverOutlet {
-				t.doingconn = true
-			}
-		}
-		if buttons == MouseRight {
-			if code == OverOutlet {
-				disconnect(t.Objects[over])
-			}
-		}
-	}
-	if buttons != 0 && delta == 0 && t.hold >= 0 {
-		if t.doingconn {
-			if buttons == MouseLeft {
-				t.end = at
-			}
-
-		} else {
-			dif := Dxy(at, t.start)
-			fmt.Println(dif)
-			r := t.Objects[t.hold].Rect()
-			if t.holdcode == MoveMe {
-				r.X += dif.X
-				r.Y += dif.Y
-				t.start = at
-				fmt.Println(r)
-			}
-			if t.holdcode == ResizeMe {
-				l, u := t.Objects[t.hold].Limits()
-				if r.W+dif.X <= l.W || r.W+dif.X >= u.W {
-					dif.X = 0
-				}
-				if r.H+dif.Y <= l.H || r.H+dif.Y >= u.H {
-					dif.Y = 0
-				}
-				r.W += dif.X
-				r.H += dif.Y
-				t.start = at
-				fmt.Println(r)
-			}
-		}
-	}
-
-	if buttons == 0 && delta != 0 {
-		if delta == MouseLeft {
-			if t.holdcode == OverOutlet && code == OverInlet && over >= 0 {
-				connect(t.Objects[over], t.Objects[t.hold])
-				t.doingconn = false
-			}
-		}
-		t.hold = -1
-		t.holdcode = 0
-	}
 }
 
 func (t *tedstate) TextInput(r rune) {
