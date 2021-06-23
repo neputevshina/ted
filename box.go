@@ -16,7 +16,19 @@ type buf struct {
 	Text      []rune
 	Entry     *TedText
 	Scrollpos uint
-	Cursor    [2]uint
+}
+
+func newbuf(where XYWH) *buf {
+	b := &buf{
+		Where:   where,
+		outlets: make(map[node]struct{}),
+		Text:    make([]rune, 0, 100),
+	}
+	e := NewTedText(&b.Text, G, gcache, false, false)
+	b.Entry = e
+	x, y, w, h := where.Val()
+	e.Where = Rect(x, y+BoxKnobsSize, w, h-BoxKnobsSize*2)
+	return b
 }
 
 func (b *buf) Inlet() *node {
@@ -50,9 +62,13 @@ func (b *buf) Draw() {
 	G.FillRect(outletpos(xy).ToSDL())
 	// knob
 	G.FillRect(knobpos(xy).ToSDL())
+	b.Entry.Draw()
 }
 
 func (b *buf) Mouse(at XY, buttons int, delta int) int {
+	// todo: ugly
+	x, y, w, h := b.Where.Val()
+	b.Entry.Where = Rect(x, y+BoxKnobsSize, w, h-BoxKnobsSize*2)
 	if knobpos(b.Where).Inside(at) {
 		if buttons == MouseLeft {
 			return MoveMe
@@ -70,6 +86,7 @@ func (b *buf) Mouse(at XY, buttons int, delta int) int {
 	if outletpos(b.Where).Inside(at) {
 		return OverOutlet
 	}
+	b.Entry.Mouse(at, buttons, delta)
 	return 0
 }
 
