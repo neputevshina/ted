@@ -98,10 +98,6 @@ func (b *buf) Rect() *XYWH {
 	return &b.Where
 }
 
-// func errletpos(xy XYWH) XYWH {
-// 	return Rect(xx.X+xx.H+4*2, xx.Y, xx.W, xx.H)
-// }
-
 type cmd struct {
 	Where  XYWH
 	Inlet  node
