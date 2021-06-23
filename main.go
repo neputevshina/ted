@@ -140,6 +140,18 @@ func eventloop() {
 					ted.TextInput('\b')
 				case sdl.K_DELETE:
 					ted.TextInput('\x7f')
+				case sdl.K_HOME:
+					ted.TextInput('\x01')
+				case sdl.K_END:
+					ted.TextInput('\x05')
+				case sdl.K_UP:
+					ted.TextInput('\x11')
+				case sdl.K_DOWN:
+					ted.TextInput('\x12')
+				case sdl.K_LEFT:
+					ted.TextInput('\x13')
+				case sdl.K_RIGHT:
+					ted.TextInput('\x14')
 				}
 			}
 		}

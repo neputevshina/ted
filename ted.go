@@ -18,8 +18,8 @@ func createted() {
 	ted = tedstate{
 		Where: Wt(800, 600),
 		NewBox: button{
-			PressLeft:  10,
-			PressRight: 11,
+			PressLeft:  11,
+			PressRight: 10,
 		},
 	}
 

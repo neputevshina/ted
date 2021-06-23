@@ -4,12 +4,29 @@ func (t *tedstate) hit(at XY, top bool) drawer {
 	for i := len(t.Objects) - 1; i >= 0; i-- {
 		e := t.Objects[i]
 		if e.Rect().Inside(at) {
-			if top {
-				t.Objects = append(
-					append(t.Objects[:i], t.Objects[i+1:]...),
-					t.Objects[i],
-				)
-			}
+			// fix this
+			// if top {
+			// 	serch := func(n node) int {
+			// 		for i, m := range t.Objects {
+			// 			if n == m {
+			// 				return i
+			// 			}
+			// 		}
+			// 		return len(t.Objects)
+			// 	}
+			// 	ap := func(i int) {
+			// 		t.Objects = append(
+			// 			append(t.Objects[:i], t.Objects[i+1:]...),
+			// 			t.Objects[i],
+			// 		)
+			// 	}
+			// 	ovi := serch(t.ov.(node))
+			// 	ap(ovi)
+			// 	holdi := serch(t.hold.(node))
+			// 	ap(holdi)
+			// 	ap(i)
+			// 	return t.Objects[len(t.Objects)-1]
+			// }
 			return e
 		}
 	}
@@ -20,7 +37,7 @@ func (t *tedstate) hit(at XY, top bool) drawer {
 }
 
 func (t *tedstate) Mouse(at XY, buttons, delta int) {
-	t.ov = t.hit(at, false)
+	t.ov = t.hit(at, buttons == delta && delta != 0 && t.hold == nil)
 	if t.ov != nil {
 		t.code = t.ov.Mouse(at, buttons, delta)
 	}
