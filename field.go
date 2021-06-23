@@ -316,16 +316,36 @@ func (e *TedText) TextInput(r rune) {
 	if e.Sel[0] > e.Sel[1] {
 		e.Sel[0], e.Sel[1] = e.Sel[1], e.Sel[0]
 	}
+
+	if r == '\x13' {
+		e.Sel[0]--
+		if e.Sel[0] < 0 {
+			e.Sel[0] = 0
+		}
+		e.Sel[1] = e.Sel[0]
+		return
+	}
+	if r == '\x14' {
+		e.Sel[0]++
+		if e.Sel[0] > len(*e.Text) {
+			e.Sel[0] = len(*e.Text)
+		}
+		e.Sel[1] = e.Sel[0]
+		return
+	}
+
 	x0, x1 := e.Sel[0], e.Sel[1]
 	if r == '\x7f' {
 		if x0 == x1 {
 			x0++
 			x1++
+			if x0 > len(*e.Text) {
+				return
+			}
 		}
 		r = '\b'
 	}
 	if r == '\b' {
-
 		if x0 == x1 && x0 > 0 {
 			t = append(t[:x0-1], t[x0:]...)
 			e.Sel[0] = x0 - 1
