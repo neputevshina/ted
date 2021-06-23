@@ -22,12 +22,10 @@ const winout = BoxKnobsSize
 const hinout = BoxKnobsSize
 
 func inletpos(xy XYWH) XYWH {
-	//return Rect(xy.X+4, xy.Y, 8, 3)
 	return Rect(xy.X, xy.Y, winout, hinout)
 }
 
 func outletpos(xy XYWH) XYWH {
-	//return Rect(xy.X+4, xy.Y+xy.H-3, 8, 3)
 	return Rect(xy.X, xy.Y+xy.H-hinout, winout, hinout)
 }
 

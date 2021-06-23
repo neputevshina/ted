@@ -45,20 +45,22 @@ func (t *tedstate) Draw() {
 		}
 	}
 	for i := range t.Objects {
-		// if i == t.focus {
+		// if t.Objects[i] == t.ov {
 		// 	G.SetDrawColor(colx(0x0000ffff))
-		// 	G.FillRect(t.Objects[t.focus].Rect().Extrude(-2).ToSDL())
+		// 	G.FillRect(t.ov.Rect().Extrude(-2).ToSDL())
 		// }
+		G.SetClipRect(t.Objects[i].Rect().ToSDL())
 		t.Objects[i].Draw()
+		G.SetClipRect(nil)
 	}
 	// // ugly, but will work
 	if t.hold == nil {
 		*t.NewBox.Rect() = newbrect(t.Where)
 		t.NewBox.Draw()
 	}
-	// if t.doingconn {
-	// 	G.DrawLine(int32(t.start.X), int32(t.start.Y), int32(t.end.X), int32(t.end.Y))
-	// }
+	if t.hcode == OverOutlet {
+		G.DrawLine(int32(t.start.X), int32(t.start.Y), int32(t.end.X), int32(t.end.Y))
+	}
 }
 
 func (t *tedstate) hit(at XY) drawer {
@@ -75,9 +77,9 @@ func (t *tedstate) hit(at XY) drawer {
 }
 
 func connect(out node, in node) {
-	(*in.Outlets())[out] = struct{}{}
-	disconnect(out)
-	*out.Inlet() = in
+	(*out.Outlets())[in] = struct{}{}
+	disconnect(in)
+	*in.Inlet() = out
 }
 
 func disconnect(o node) {
