@@ -18,6 +18,7 @@ type node interface {
 	drawer
 	Inlet() *node
 	Outlets() *map[node]struct{}
+	TextInput(r rune)
 }
 
 func colx(i uint32) (uint8, uint8, uint8, uint8) {

@@ -16,7 +16,7 @@ var window *sdl.Window
 var G *sdl.Renderer
 var ted tedstate
 
-var gcache *SpriteCache
+var gcache *FontSprites
 
 // Gfont is a global application font
 var Gfont *ttf.Font
@@ -38,9 +38,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	if Gfont, err = ttf.OpenFont(`./Go-Regular.ttf`, 10); err != nil {
+	if Gfont, err = ttf.OpenFont(`./Go-Regular.ttf`, FontSize); err != nil {
 		panic(err)
 	}
+	gcache = NewFontSprites(G, Gfont, rgba(0x000000ff))
 	sdl.EnableScreenSaver()
 	window.SetResizable(true)
 	ted = tedstate{

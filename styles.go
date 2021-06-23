@@ -11,14 +11,15 @@ const (
 
 // Sizes
 const (
+	FontSize                 = 12
 	BoxBorderWidth           = 1
 	BoxKnobsSize             = 8
 	AnywhereFocusBorderWidth = 2
 	NodeHeight               = 16
 )
 
-const winout = 8
-const hinout = 8
+const winout = BoxKnobsSize
+const hinout = BoxKnobsSize
 
 func inletpos(xy XYWH) XYWH {
 	//return Rect(xy.X+4, xy.Y, 8, 3)

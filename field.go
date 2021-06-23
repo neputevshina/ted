@@ -35,19 +35,19 @@ type Sprite struct {
 	// todo: add kerning cache
 }
 
-// SpriteCache is a storage of prerendered glyphs of certain size and color.
+// FontSprites is a storage of prerendered glyphs of certain size and color.
 // Don't even try to update cache not in drawing context.
 // todo: multicolored?
-type SpriteCache struct {
+type FontSprites struct {
 	Color sdl.Color
 	R     *sdl.Renderer
 	Font  *ttf.Font
 	Cache map[rune]Sprite
 }
 
-// NewSpriteCache returns ready-to-work glyph cache.
-func NewSpriteCache(r *sdl.Renderer, f *ttf.Font, c sdl.Color) *SpriteCache {
-	return &SpriteCache{
+// NewFontSprites returns ready-to-work glyph cache.
+func NewFontSprites(r *sdl.Renderer, f *ttf.Font, c sdl.Color) *FontSprites {
+	return &FontSprites{
 		Color: c,
 		R:     r,
 		Font:  f,
@@ -57,19 +57,27 @@ func NewSpriteCache(r *sdl.Renderer, f *ttf.Font, c sdl.Color) *SpriteCache {
 
 // TedText is an elastic tabstop text box
 type TedText struct {
-	R           *sdl.Renderer //
-	Font        *ttf.Font     //
-	SpriteCache *SpriteCache  //
-	Where       XYWH          // Position on screen
-	Limit       bool          // Cull text to its hitbox
-	Oneliner    bool          // Display only first line and ignore newlines input
-	Text        *[]rune       //
-	Color       uint32        //
-	Sel         [2]int        // Selection
-	addlater    rune          //
-	Wakeup      chan Bang     // Bang here wakes box up from drawing stasis
+	R        *sdl.Renderer //
+	Sprites  *FontSprites  //
+	Where    XYWH          // Position on screen
+	Limit    bool          // Cull text to its hitbox
+	Oneliner bool          // Display only first line and ignore newlines input
+	Text     *[]rune       //
+	Sel      [2]int        // Selection
+	addlater rune          //
+	Wakeup   chan struct{} // Bang here wakes box up from drawing stasis
 	//colors [][]uint
 	//tabs [][]uint
+}
+
+func NewTedText(text *[]rune, r *sdl.Renderer, f *FontSprites, oneliner, limit bool) *TedText {
+	return &TedText{
+		R:       r,
+		Sprites: f,
+		Text:    text,
+		Sel:     [2]int{0, 0},
+		Wakeup:  make(chan struct{}, 1),
+	}
 }
 
 const (
@@ -80,13 +88,13 @@ const (
 
 // }
 
-func (s *SpriteCache) Generate(text []rune) {
+func (s *FontSprites) Generate(text []rune) {
 	for _, r := range text {
 		s.Update(r)
 	}
 }
 
-func (sc *SpriteCache) Update(r rune) {
+func (sc *FontSprites) Update(r rune) {
 	if _, k := sc.Cache[r]; !k {
 		m, err := sc.Font.GlyphMetrics(r)
 		if err != nil {
@@ -106,11 +114,11 @@ func (sc *SpriteCache) Update(r rune) {
 }
 
 func (e *TedText) mylittletypesetter() {
-	f := e.Font
+	f := e.Sprites.Font
 	characc := 0
 	lineacc := 0
 
-	rcache := e.SpriteCache.Cache
+	rcache := e.Sprites.Cache
 	for _, r := range *e.Text {
 		//e.SpriteCache.Update(r)
 		if r == '\n' {
@@ -139,8 +147,8 @@ func (e *TedText) paintsel() {
 		esel[0], esel[1] = esel[1], esel[0]
 	}
 
-	fh := e.Font.Height()
-	fl := e.Font.LineSkip()
+	fh := e.Sprites.Font.Height()
+	fl := e.Sprites.Font.LineSkip()
 	characc := 0
 	lineacc := 0
 
@@ -188,11 +196,11 @@ func (e *TedText) paintsel() {
 			e.R.SetDrawColor(colx(0x000000ff))
 			e.R.FillRect(Rect(line.X+line.W, line.Y, 1, line.H).ToSDL())
 			// last time
-			characc += e.SpriteCache.Cache[r].m.Advance
+			characc += e.Sprites.Cache[r].m.Advance
 
 			break
 		}
-		characc += e.SpriteCache.Cache[r].m.Advance
+		characc += e.Sprites.Cache[r].m.Advance
 	}
 
 	if esel[1] == len(*e.Text) {
@@ -207,7 +215,9 @@ func (e *TedText) Draw() {
 	// sooooo, with this shitty »hack« we will update only incoming runes! yay!!
 	// and this speeds up almost nothing.
 	// fucking add blitting cache, for god's sake
-	e.SpriteCache.Update(e.addlater)
+	if e.addlater != 0 {
+		e.Sprites.Update(e.addlater)
+	}
 	e.mylittletypesetter()
 	e.paintsel()
 }
@@ -222,9 +232,9 @@ func measline(font *ttf.Font, at XY) int {
 
 func (e *TedText) measchar(at XY) (j int) {
 	where := *e.Text
-	glyphs := e.SpriteCache.Cache
+	glyphs := e.Sprites.Cache
 	// skip lines
-	atline := measline(e.Font, at)
+	atline := measline(e.Sprites.Font, at)
 	if e.Oneliner {
 		atline = 0
 	}
@@ -239,29 +249,31 @@ func (e *TedText) measchar(at XY) (j int) {
 		}
 	}
 	zero := at.X
-	zero -= glyphs[where[0]].m.Advance / 2
-	characc := 0
-	last := 0
-	for i, r := range where {
-		abs := zero - characc
-		curr := glyphs[r].m.Advance
+	if len(where) > 0 {
+		zero -= glyphs[where[0]].m.Advance / 2
+		characc := 0
+		last := 0
+		for i, r := range where {
+			abs := zero - characc
+			curr := glyphs[r].m.Advance
 
-		if r == '\n' {
-			// we need a way to touch the newline symbol
-			curr = TextNewlineWidth
+			if r == '\n' {
+				// we need a way to touch the newline symbol
+				curr = TextNewlineWidth
+			}
+			if abs <= last {
+				j = i + 1
+				return
+			}
+			if i < j {
+				continue
+			}
+			last = curr
+			characc += last
 		}
-		if abs <= last {
-			j = i + 1
-			return
-		}
-		if i < j {
-			continue
-		}
-		last = curr
-		characc += last
 	}
 	// not found, return last
-	return len(where) - 1
+	return len(where)
 }
 
 // Rect as in Drawer
@@ -271,7 +283,7 @@ func (e *TedText) Rect() *XYWH {
 
 // Limits as in Drawer
 func (e *TedText) Limits() (lower WH, upper WH) {
-	return Wt(e.Font.Height(), e.Font.Height()), Wt(-1, -1)
+	return Wt(e.Sprites.Font.Height(), e.Sprites.Font.Height()), Wt(-1, -1)
 }
 
 // Mouse as in Drawer
