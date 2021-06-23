@@ -18,7 +18,8 @@ func createted() {
 	ted = tedstate{
 		Where: Wt(800, 600),
 		NewBox: button{
-			PressLeft: 10,
+			PressLeft:  10,
+			PressRight: 11,
 		},
 	}
 
@@ -36,6 +37,15 @@ func (t *tedstate) Draw() {
 	G.SetDrawColor(colx(FieldColor))
 	G.Clear()
 	for i := range t.Objects {
+		if t.Objects[i] == t.ov {
+			G.SetDrawColor(colx(0x0000ffff))
+			G.FillRect(t.ov.Rect().Extrude(-2).ToSDL())
+		}
+		G.SetClipRect(t.Objects[i].Rect().ToSDL())
+		t.Objects[i].Draw()
+		G.SetClipRect(nil)
+	}
+	for i := range t.Objects {
 		// connections
 		G.SetDrawColor(colx(BoxBorderColor))
 		if o := (*t.Objects[i].Inlet()); o != nil {
@@ -43,15 +53,6 @@ func (t *tedstate) Draw() {
 			in := inletpos(*t.Objects[i].Rect()).Center()
 			G.DrawLine(int32(ou.X), int32(ou.Y), int32(in.X), int32(in.Y))
 		}
-	}
-	for i := range t.Objects {
-		// if t.Objects[i] == t.ov {
-		// 	G.SetDrawColor(colx(0x0000ffff))
-		// 	G.FillRect(t.ov.Rect().Extrude(-2).ToSDL())
-		// }
-		G.SetClipRect(t.Objects[i].Rect().ToSDL())
-		t.Objects[i].Draw()
-		G.SetClipRect(nil)
 	}
 	// // ugly, but will work
 	if t.hold == nil {
@@ -61,19 +62,6 @@ func (t *tedstate) Draw() {
 	if t.hcode == OverOutlet {
 		G.DrawLine(int32(t.start.X), int32(t.start.Y), int32(t.end.X), int32(t.end.Y))
 	}
-}
-
-func (t *tedstate) hit(at XY) drawer {
-	for i := len(t.Objects) - 1; i >= 0; i-- {
-		e := t.Objects[i]
-		if e.Rect().Inside(at) {
-			return e
-		}
-	}
-	if t.NewBox.Rect().Inside(at) {
-		return &t.NewBox
-	}
-	return nil
 }
 
 func connect(out node, in node) {
