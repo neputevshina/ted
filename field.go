@@ -33,7 +33,7 @@ type Sprite struct {
 	// todo: add kerning cache
 }
 
-// FontSprites is a storage of prerendered glyphs of certain size and color.
+// FontSprites is a storage of pre-rendered glyphs of certain size and color.
 // Don't even try to update cache not in drawing context.
 // todo: multicolored?
 type FontSprites struct {
@@ -68,6 +68,7 @@ type TedText struct {
 	//tabs [][]uint
 }
 
+// NewTedText is a constructor for TedText
 func NewTedText(text *[]rune, r *sdl.Renderer, f *FontSprites, oneliner, limit bool) *TedText {
 	return &TedText{
 		R:        r,
@@ -80,36 +81,34 @@ func NewTedText(text *[]rune, r *sdl.Renderer, f *FontSprites, oneliner, limit b
 	}
 }
 
-const (
-	TextNewlineWidth = 6 // px
-)
-
 // func (e *TedText) solvetabs() {
 
 // }
 
+// Generate generates a sprite cache for a text.
 func (s *FontSprites) Generate(text []rune) {
 	for _, r := range text {
 		s.Update(r)
 	}
 }
 
-func (sc *FontSprites) Update(r rune) {
-	if _, k := sc.Cache[r]; !k {
-		m, err := sc.Font.GlyphMetrics(r)
+// Update draws rune and caches it. If rune is already rendered, it does nothing.
+func (s *FontSprites) Update(r rune) {
+	if _, k := s.Cache[r]; !k {
+		m, err := s.Font.GlyphMetrics(r)
 		if err != nil {
 			panic(err)
 		}
-		s, err := sc.Font.RenderGlyphBlended(r, sc.Color)
+		u, err := s.Font.RenderGlyphBlended(r, s.Color)
 		if err != nil {
 			panic(err)
 		}
-		t, err := sc.R.CreateTextureFromSurface(s)
+		t, err := s.R.CreateTextureFromSurface(u)
 		if err != nil {
 			panic(err)
 		}
-		cl := s.ClipRect
-		sc.Cache[r] = Sprite{t, *m, cl}
+		cl := u.ClipRect
+		s.Cache[r] = Sprite{t, *m, cl}
 	}
 }
 
@@ -120,7 +119,6 @@ func (e *TedText) mylittletypesetter() {
 
 	rcache := e.Sprites.Cache
 	for _, r := range *e.Text {
-		//e.SpriteCache.Update(r)
 		if r == '\n' {
 			// proper oneliner won't have \ns
 			if e.Oneliner {
@@ -165,7 +163,6 @@ func (e *TedText) paintsel() {
 
 	inside := false
 	for i, r := range *e.Text {
-		// cache is already there, skip
 		if i == esel[0] {
 			inside = true
 			line = Rect(characc, lineacc, 0, fh).Move(e.Where.Xy())
@@ -214,7 +211,7 @@ func (e *TedText) paintsel() {
 func (e *TedText) Draw() {
 	// sooooo, with this shitty »hack« we will update only incoming runes! yay!!
 	// and this speeds up almost nothing.
-	// fucking add blitting cache, for god's sake
+	// fucking add blitting cache finally, for god's sake
 	if e.addlater != 0 {
 		e.Sprites.Update(e.addlater)
 	}

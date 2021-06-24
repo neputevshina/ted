@@ -41,7 +41,7 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 	if t.ov != nil {
 		t.code = t.ov.Mouse(at, buttons, delta)
 	}
-	// todo: fsa mouse input parser; see proton, pike's squeak
+	// todo: fsa-based mouse input parser; see proton, pike's squeak
 	if buttons == delta && delta != 0 { // press
 		if t.code == MoveMe || t.code == ResizeMe {
 			t.start = at

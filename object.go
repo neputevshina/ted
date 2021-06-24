@@ -34,6 +34,7 @@ func rgba(i uint32) sdl.Color {
 	return sdl.Color{r, g, b, a}
 }
 
+// Mouse states
 const (
 	MouseLeft   = 1 // sdl.ButtonLMask()
 	MouseMiddle = 2

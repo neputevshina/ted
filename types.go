@@ -17,6 +17,7 @@ func (x XY) Val() (int, int) {
 	return x.X, x.Y
 }
 
+// FromSDL converts an sdl.Rect to our rect.
 func FromSDL(r sdl.Rect) XYWH {
 	return Rect(int(r.X), int(r.Y), int(r.W), int(r.H))
 }
@@ -31,6 +32,7 @@ func (x XY) Wt(w int, h int) XYWH {
 	return XYWH{x.X, x.Y, w, h}
 }
 
+// Wh converts a XY point to WH point.
 func (x XY) Wh() WH {
 	return WH{x.X, x.Y}
 }
@@ -55,8 +57,9 @@ func (x XYWH) Extrude(length int) XYWH {
 	return Rect(x.X+length, x.Y+length, x.W-length*2, x.H-length*2)
 }
 
-func (xy XYWH) Center() XY {
-	return At((2*xy.X+xy.W)/2, (2*xy.Y+xy.H)/2)
+// Center returns coordinated of the point in center of rectangle.
+func (x XYWH) Center() XY {
+	return At((2*x.X+x.W)/2, (2*x.Y+x.H)/2)
 }
 
 // Inside checks if point and rect intersects
@@ -97,6 +100,7 @@ func At(x, y int) XY {
 	return XY{X: x, Y: y}
 }
 
+// NoLimit is a WH, used in drawer.Limits to indicate that drawer has no upper limit.
 func NoLimit() WH {
 	const max = int(^uint(0) >> 1)
 	return WH{max, max}
