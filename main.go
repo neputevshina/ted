@@ -107,14 +107,17 @@ func eventloop() {
 				println("A")
 				ted.Where = Wt(int(e.Data1), int(e.Data2))
 			}
+
 		case *sdl.TextInputEvent:
 			r, _ := utf8.DecodeRune(e.Text[:])
 			ted.TextInput(r)
+
 		case *sdl.MouseMotionEvent:
 			s := int(e.State)
 			moused = mouseprev ^ s
 			ted.Mouse(At(int(e.X), int(e.Y)), s, moused)
 			mouseprev = int(e.State)
+
 		case *sdl.MouseButtonEvent:
 			ch := 0
 			switch e.Button {
@@ -131,6 +134,7 @@ func eventloop() {
 				ted.Mouse(At(int(e.X), int(e.Y)), ch, ch)
 			}
 			mouseprev = ch
+
 		case *sdl.KeyboardEvent:
 			if e.State == sdl.PRESSED {
 				switch e.Keysym.Sym {
@@ -154,6 +158,7 @@ func eventloop() {
 					ted.TextInput('\x14')
 				}
 			}
+
 		}
 
 	}

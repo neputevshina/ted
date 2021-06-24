@@ -16,6 +16,7 @@ const (
 	BoxKnobsSize             = 8
 	AnywhereFocusBorderWidth = 2
 	NodeHeight               = 16
+	TextNewlineWidth         = 6 // px
 )
 
 const winout = BoxKnobsSize

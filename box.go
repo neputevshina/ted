@@ -152,13 +152,6 @@ func (c *cmd) Draw() {
 	G.FillRect(xy.ToSDL())
 	G.SetDrawColor(colx(BoxBgColor))
 	G.FillRect(xy.Extrude(1).ToSDL())
-	// inlet
-	// switch c.inletmode {
-	// case inappend:
-	// 	G.SetDrawColor(colx(InletAppendColor))
-	// case inupdate:
-	//
-	// }
 	G.SetDrawColor(colx(InletAppendColor))
 	G.FillRect(inletpos(xy).ToSDL())
 	G.SetDrawColor(colx(BoxBorderColor))
@@ -177,14 +170,8 @@ func (c *cmd) Mouse(at XY, buttons int, delta int) int {
 		if buttons == MouseLeft {
 			return MoveMe
 		}
-		// if buttons == MouseRight {
-		// 	return ResizeMe
-		// }
 	}
 	if inletpos(c.Where).Inside(at) {
-		// if buttons == delta && buttons == MouseLeft {
-		// 	c.inletmode = (c.inletmode + 1) % inmodes
-		// }
 		return OverInlet
 	}
 	if outletpos(c.Where).Inside(at) {

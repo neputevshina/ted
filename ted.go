@@ -45,8 +45,8 @@ func (t *tedstate) Draw() {
 		t.Objects[i].Draw()
 		G.SetClipRect(nil)
 	}
+	// connections
 	for i := range t.Objects {
-		// connections
 		G.SetDrawColor(colx(BoxBorderColor))
 		if o := (*t.Objects[i].Inlet()); o != nil {
 			ou := outletpos(*o.Rect()).Center()
@@ -54,7 +54,7 @@ func (t *tedstate) Draw() {
 			G.DrawLine(int32(ou.X), int32(ou.Y), int32(in.X), int32(in.Y))
 		}
 	}
-	// // ugly, but will work
+	// ugly, but will work
 	if t.hold == nil {
 		*t.NewBox.Rect() = newbrect(t.Where)
 		t.NewBox.Draw()
