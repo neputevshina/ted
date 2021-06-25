@@ -1,28 +1,21 @@
 package main
 
-func (t *tedstate) hit(at XY, top bool) drawer {
+func (t *tedstate) hit(at XY, top bool) drawable {
 	for i := len(t.Objects) - 1; i >= 0; i-- {
 		e := t.Objects[i]
 		if e.Rect().Inside(at) {
 			// fix this
 			// if top {
-			// 	serch := func(n node) int {
-			// 		for i, m := range t.Objects {
-			// 			if n == m {
-			// 				return i
-			// 			}
-			// 		}
-			// 		return len(t.Objects)
-			// 	}
+			//
 			// 	ap := func(i int) {
 			// 		t.Objects = append(
 			// 			append(t.Objects[:i], t.Objects[i+1:]...),
 			// 			t.Objects[i],
 			// 		)
 			// 	}
-			// 	ovi := serch(t.ov.(node))
+			// 	ovi := t.serch(t.ov.(node))
 			// 	ap(ovi)
-			// 	holdi := serch(t.hold.(node))
+			// 	holdi := t.serch(t.hold.(node))
 			// 	ap(holdi)
 			// 	ap(i)
 			// 	return t.Objects[len(t.Objects)-1]
@@ -35,11 +28,28 @@ func (t *tedstate) hit(at XY, top bool) drawer {
 	}
 	return nil
 }
+func (t *tedstate) serch(n node) int {
+	for i, m := range t.Objects {
+		if n == m {
+			return i
+		}
+	}
+	return len(t.Objects)
+}
+
+func (t *tedstate) kill(n node) {
+	disconnectin(n)
+	disconnectout(n)
+	i := t.serch(n)
+	t.Objects = append(t.Objects[:i], t.Objects[i+1:]...)
+}
 
 func (t *tedstate) Mouse(at XY, buttons, delta int) {
 	t.ov = t.hit(at, buttons == delta && delta != 0 && t.hold == nil)
 	if t.ov != nil {
 		t.code = t.ov.Mouse(at, buttons, delta)
+	} else {
+		t.code = 0
 	}
 	// todo: fsa-based mouse input parser; see proton, pike's squeak
 	if buttons == delta && delta != 0 { // press
@@ -48,6 +58,14 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 			t.end = at
 			t.hold = t.ov
 			t.hcode = t.code
+		}
+		if t.code == OverKiller {
+			if t.killmode && buttons == MouseLeft {
+				t.kill(t.ov.(node))
+				t.killmode = false
+			} else if buttons == MouseRight {
+				t.killmode = true
+			}
 		}
 		if t.code == OverOutlet {
 			if buttons == MouseLeft {
@@ -59,7 +77,7 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 			if buttons == MouseRight {
 				switch ov := t.ov.(type) {
 				case node:
-					disconnect(ov)
+					disconnectin(ov)
 				}
 			}
 		}
@@ -125,6 +143,9 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 		}
 		t.hold = nil
 		t.hcode = 0
+	}
+	if t.code != OverKiller {
+		t.killmode = false
 	}
 
 }

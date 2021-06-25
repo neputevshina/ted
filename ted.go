@@ -5,13 +5,15 @@ type tedstate struct {
 	Objects []node
 	NewBox  button
 
-	ov    drawer
+	ov    drawable
 	code  int
-	hold  drawer
+	hold  drawable
 	hcode int
 
 	start XY
 	end   XY
+
+	killmode bool
 }
 
 func createted() {
@@ -66,17 +68,22 @@ func (t *tedstate) Draw() {
 
 func connect(out node, in node) {
 	(*out.Outlets())[in] = struct{}{}
-	disconnect(in)
+	disconnectin(in)
 	*in.Inlet() = out
 }
 
-func disconnect(o node) {
+func disconnectin(o node) {
 	if *o.Inlet() != nil {
-		if _, has := (*(*o.Inlet()).Outlets())[o]; has {
-			delete(*((*o.Inlet()).Outlets()), o)
-		}
+		delete(*((*o.Inlet()).Outlets()), o)
 		*o.Inlet() = nil
 	}
+}
+
+func disconnectout(o node) {
+	for n := range *o.Outlets() {
+		*n.Inlet() = nil
+	}
+	*o.Outlets() = make(map[node]struct{})
 }
 
 func (t *tedstate) TextInput(r rune) {

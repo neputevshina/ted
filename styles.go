@@ -30,6 +30,10 @@ func outletpos(xy XYWH) XYWH {
 	return Rect(xy.X, xy.Y+xy.H-hinout, winout, hinout)
 }
 
+func killerpos(xy XYWH) XYWH {
+	return Rect(xy.X+xy.W-winout, xy.Y, winout, hinout)
+}
+
 func knobpos(xy XYWH) XYWH {
 	bx := BoxKnobsSize
 	return Rect(xy.X+xy.W-bx, xy.Y+xy.H-bx, bx, bx)
