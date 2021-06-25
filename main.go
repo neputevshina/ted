@@ -12,13 +12,13 @@ import (
 
 var window *sdl.Window
 
-// G is a global window rendeder for an application
+// G is the global window rendeder for an application
 var G *sdl.Renderer
 var ted tedstate
 
 var gcache *FontSprites
 
-// Gfont is a global application font
+// Gfont is the global application font
 var Gfont *ttf.Font
 
 func init() {
@@ -102,12 +102,6 @@ func eventloop() {
 		}
 
 		switch e := event.(type) {
-		case *sdl.WindowEvent:
-			if e.Type == sdl.WINDOWEVENT_SIZE_CHANGED {
-				println("A")
-				ted.Where = Wt(int(e.Data1), int(e.Data2))
-			}
-
 		case *sdl.TextInputEvent:
 			r, _ := utf8.DecodeRune(e.Text[:])
 			ted.TextInput(r)

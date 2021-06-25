@@ -185,17 +185,12 @@ func (e *TedText) paintsel() {
 			continue
 		}
 		if i == esel[1] {
-			inside = false
 			line.W = characc
 			e.R.SetDrawColor(colx(0xffff00ff))
 			e.R.FillRect(line.ToSDL())
 
 			e.R.SetDrawColor(colx(0x000000ff))
 			e.R.FillRect(Rect(line.X+line.W, line.Y, 1, line.H).ToSDL())
-			// last time
-			characc += e.Sprites.Cache[r].m.Advance
-
-			break
 		}
 		characc += e.Sprites.Cache[r].m.Advance
 	}
@@ -207,7 +202,7 @@ func (e *TedText) paintsel() {
 
 }
 
-// Draw paints object to the screen
+// Draw paints an object to the screen
 func (e *TedText) Draw() {
 	// sooooo, with this shitty »hack« we will update only incoming runes! yay!!
 	// and this speeds up almost nothing.
@@ -314,7 +309,7 @@ func (e *TedText) TextInput(r rune) {
 		e.Sel[0], e.Sel[1] = e.Sel[1], e.Sel[0]
 	}
 
-	if r == '\x13' {
+	if r == '\x13' { // arrow left
 		e.Sel[0]--
 		if e.Sel[0] < 0 {
 			e.Sel[0] = 0
@@ -322,7 +317,7 @@ func (e *TedText) TextInput(r rune) {
 		e.Sel[1] = e.Sel[0]
 		return
 	}
-	if r == '\x14' {
+	if r == '\x14' { // arrow right
 		e.Sel[0]++
 		if e.Sel[0] > len(*e.Text) {
 			e.Sel[0] = len(*e.Text)
@@ -332,7 +327,7 @@ func (e *TedText) TextInput(r rune) {
 	}
 
 	x0, x1 := e.Sel[0], e.Sel[1]
-	if r == '\x7f' {
+	if r == '\x7f' { // delete
 		if x0 == x1 {
 			x0++
 			x1++

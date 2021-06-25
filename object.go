@@ -7,7 +7,7 @@ import (
 // type inflow interface{}
 // type outflow interface{}
 
-type drawer interface {
+type drawable interface {
 	Draw()
 	Mouse(at XY, buttons int, delta int) int
 	Rect() *XYWH
@@ -15,8 +15,9 @@ type drawer interface {
 }
 
 type node interface {
-	drawer
+	drawable
 	Inlet() *node
+	// Play(in *io.PipeReader, out *io.PipeWriter, err *io.PipeWriter)
 	Outlets() *map[node]struct{}
 	TextInput(r rune)
 }
@@ -48,6 +49,7 @@ const (
 	ResizeMe
 	OverInlet
 	OverOutlet
+	OverKiller
 	// OverTextA
 	// OverTextB
 )
