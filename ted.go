@@ -88,8 +88,7 @@ func disconnectout(o node) {
 
 func (t *tedstate) TextInput(r rune) {
 	if t.ov != nil {
-		switch ov := t.ov.(type) {
-		case node:
+		if ov, k := t.ov.(node); k {
 			ov.TextInput(r)
 		}
 	}
