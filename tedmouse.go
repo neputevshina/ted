@@ -75,8 +75,7 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 				t.hcode = t.code
 			}
 			if buttons == MouseRight {
-				switch ov := t.ov.(type) {
-				case node:
+				if ov, k := t.ov.(node); k {
 					disconnectin(ov)
 				}
 			}
@@ -133,12 +132,10 @@ func (t *tedstate) Mouse(at XY, buttons, delta int) {
 
 	} else if buttons == 0 && delta != 0 { // release
 		if t.hcode == OverOutlet {
-			switch in := t.ov.(type) {
-			case node:
-				switch out := t.hold.(type) {
-				case node:
-					connect(out, in)
-				}
+			in, ok1 := t.ov.(node)
+			out, ok2 := t.hold.(node)
+			if ok1 && ok2 {
+				connect(out, in)
 			}
 		}
 		t.hold = nil

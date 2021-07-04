@@ -62,8 +62,7 @@ func main() {
 	}()
 	// editor resizing, because fuck sdl
 	sdl.AddEventWatchFunc(func(ee sdl.Event, d interface{}) bool {
-		switch e := ee.(type) {
-		case *sdl.WindowEvent:
+		if e, k := ee.(*sdl.WindowEvent); k {
 			if e.Event == sdl.WINDOWEVENT_RESIZED {
 				w, _ := sdl.GetWindowFromID(e.WindowID)
 				if w == d.(*sdl.Window) && w == window {
@@ -95,8 +94,7 @@ func eventloop() {
 			goto wt
 		}
 
-		switch event.(type) {
-		case *sdl.QuitEvent:
+		if _, k := event.(*sdl.QuitEvent); k {
 			pprof.StopCPUProfile()
 			return
 		}
