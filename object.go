@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io"
+
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -14,11 +16,18 @@ type drawable interface {
 	Limits() (lower WH, upper WH)
 }
 
+// ted's functional node: cmd or buffer
 type node interface {
 	drawable
+
 	Inlet() *node
-	// Play(in *io.PipeReader, out *io.PipeWriter, err *io.PipeWriter)
 	Outlets() *map[node]struct{}
+
+	Input() *io.ReadCloser      // reader of inlet
+	Primary() *io.WriteCloser   // stdout
+	Secondary() *io.WriteCloser // errlet or sellet's writer
+	// Play(in *io.PipeReader, out *io.PipeWriter, err *io.PipeWriter)
+
 	TextInput(r rune)
 }
 

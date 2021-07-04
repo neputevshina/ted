@@ -9,11 +9,19 @@ const (
 	inmodes
 )
 
+var _ = node(&buf{})
+
 type buf struct {
-	Where     XYWH
-	inlet     node
+	Where XYWH
+
 	inletmode int
+	inlet     node
 	outlets   map[node]struct{}
+
+	in  io.ReadCloser
+	out io.WriteCloser
+	sel io.WriteCloser
+
 	Text      []rune
 	Entry     *TedText
 	Scrollpos uint
@@ -117,6 +125,14 @@ func (b *buf) Rect() *XYWH {
 	return &b.Where
 }
 
-func (b *buf) Play(in *io.PipeReader, out *io.PipeWriter, err *io.PipeWriter) {
+func (b *buf) Input() *io.ReadCloser {
+	return &b.in
+}
 
+func (b *buf) Primary() *io.WriteCloser {
+	return &b.out
+}
+
+func (b *buf) Secondary() *io.WriteCloser {
+	return &b.sel
 }
