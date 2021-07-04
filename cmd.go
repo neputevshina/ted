@@ -3,16 +3,28 @@ package main
 import (
 	"io"
 	"log"
+	"os"
 	"os/exec"
+	"time"
 )
 
+var _ = node(&cmd{})
+
 type cmd struct {
-	Where  XYWH
+	Where XYWH
+	Cmd   []rune
+
 	inlet  node
 	Entry  *TedText
 	outlet map[node]struct{}
 	errlet map[node]struct{}
-	Cmd    []rune
+
+	in  io.ReadCloser
+	out io.WriteCloser
+	err io.WriteCloser
+
+	status int
+	killme chan struct{}
 }
 
 func newcmd(where XYWH) *cmd {
@@ -94,57 +106,85 @@ func (c *cmd) Rect() *XYWH {
 	return &c.Where
 }
 
-func (c *cmd) Play(in *io.PipeReader, out *io.PipeWriter, err *io.PipeWriter) (status chan int, killme chan struct{}) {
+func (c *cmd) Play(finish chan struct{}) {
 	cm, ar := c.parsecmd()
 	ex := exec.Command(cm, ar...)
-	ex.Stdin = in
-	ex.Stdout = out
-	ex.Stderr = err
-	status = make(chan int, 1)
-	killme = make(chan struct{}, 1)
-
+	ex.Stdin = c.in
+	ex.Stdout = c.out
+	ex.Stderr = c.err
 	retur := make(chan struct{})
+
+	er := ex.Start()
+	if er != nil {
+		log.Println(er)
+		return
+	}
+
 	go func() {
-		er := ex.Start()
+		s, er := ex.Process.Wait()
 		if er != nil {
 			log.Println(er)
 			return
 		}
-		go func() {
-			s, er := ex.Process.Wait()
-			if er != nil {
-				log.Println(er)
-				return
-			}
-			retur <- struct{}{}
-			status <- s.ExitCode()
-		}()
-		select {
-		case <-killme:
-			log.Println(ex.Process.Kill())
-			retur <- struct{}{}
-		}
-		<-retur
-		return
+		c.status = s.ExitCode()
+		// fixme
+		// give reader time to read entirety of the pipe
+		// WILL fail on large inputs
+		time.Sleep(1 * time.Millisecond)
+		retur <- struct{}{}
 	}()
-	return status, killme
+
+	select {
+	case <-c.killme:
+		log.Println(ex.Process.Kill())
+		c.status = -127
+	case <-retur:
+	}
+	switch o := ex.Stdout.(type) {
+	case *os.File:
+		break
+	default:
+		_ = o
+		ex.Stdout.(io.WriteCloser).Close()
+	}
+	if finish != nil {
+		finish <- struct{}{}
+	}
 }
 
 func (c *cmd) parsecmd() (cm string, ar []string) {
 	cmfull := false
 	acc := ""
 	p := 0
-	for _, r := range c.Cmd {
+	for i, r := range c.Cmd {
 		if r == ' ' {
 			if !cmfull {
 				cm = acc
 				cmfull = true
+				acc = ""
 			} else {
 				ar = append(ar, acc)
 			}
 			p++
+			continue
 		}
 		acc += string(r)
+		if i == len(c.Cmd)-1 {
+			ar = append(ar, acc)
+			return
+		}
 	}
 	return
+}
+
+func (c *cmd) Input() *io.ReadCloser {
+	return &c.in
+}
+
+func (c *cmd) Primary() *io.WriteCloser {
+	return &c.out
+}
+
+func (c *cmd) Secondary() *io.WriteCloser {
+	return &c.err
 }
