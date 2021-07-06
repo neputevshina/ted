@@ -22,6 +22,7 @@ type node interface {
 
 	Inlet() *node
 	Outlets() *map[node]struct{}
+	Errlets() *map[node]struct{}
 
 	Input() *io.ReadCloser      // reader of inlet
 	Primary() *io.WriteCloser   // stdout

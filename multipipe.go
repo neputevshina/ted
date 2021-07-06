@@ -1,4 +1,4 @@
-// This code is a modified version of io.MultiWrite from Go standard library.
+// This code is a modified version of io.MultiWrite code from Go standard library.
 package main
 
 import (
@@ -34,7 +34,7 @@ func (t *multiWriteCloser) Close() error {
 	return nil
 }
 
-// MultiWriteCloser is a WriteCloser compliant version of io.MultiWriter.
+// MultiWriteCloser is a WriteCloser version of io.MultiWriter.
 func MultiWriteCloser(writers ...io.WriteCloser) io.WriteCloser {
 	allWriters := make([]io.WriteCloser, 0, len(writers))
 	for _, w := range writers {

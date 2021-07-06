@@ -17,6 +17,7 @@ type buf struct {
 	inletmode int
 	inlet     node
 	outlets   map[node]struct{}
+	sellets   map[node]struct{}
 
 	in  io.ReadCloser
 	out io.WriteCloser
@@ -31,6 +32,7 @@ func newbuf(where XYWH) *buf {
 	b := &buf{
 		Where:   where,
 		outlets: make(map[node]struct{}),
+		sellets: make(map[node]struct{}),
 		Text:    make([]rune, 0, 100),
 	}
 	e := NewTedText(&b.Text, G, gcache, false, false)
@@ -135,4 +137,8 @@ func (b *buf) Primary() *io.WriteCloser {
 
 func (b *buf) Secondary() *io.WriteCloser {
 	return &b.sel
+}
+
+func (b *buf) Errlets() *map[node]struct{} {
+	return &b.sellets
 }
