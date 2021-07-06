@@ -53,17 +53,9 @@ func linemeasure(text []rune, font *FontSprites) (px int) {
 	return
 }
 
-func (c *cmd) Inlet() *node {
-	return &c.inlet
-}
-
 func (c *cmd) Limits() (WH, WH) {
 	lim := Wt(linemeasure(c.Cmd, c.Entry.Sprites)+2*BoxKnobsSize, 3*FontSize/2)
 	return Wt(72, 3*FontSize/2), lim
-}
-
-func (c *cmd) Outlets() *map[node]struct{} {
-	return &c.outlet
 }
 
 func (c *cmd) Draw() {
@@ -187,4 +179,16 @@ func (c *cmd) Primary() *io.WriteCloser {
 
 func (c *cmd) Secondary() *io.WriteCloser {
 	return &c.err
+}
+
+func (c *cmd) Inlet() *node {
+	return &c.inlet
+}
+
+func (c *cmd) Outlets() *map[node]struct{} {
+	return &c.outlet
+}
+
+func (c *cmd) Errlets() *map[node]struct{} {
+	return &c.errlet
 }
